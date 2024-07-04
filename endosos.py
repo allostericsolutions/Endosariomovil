@@ -10,6 +10,7 @@ from io import StringIO, BytesIO
 from datetime import datetime
 import csv
 from fpdf import FPDF
+from docx import Document
 
 @st.cache_resource
 def load_model():
@@ -25,6 +26,13 @@ def extract_text_from_pdf(file):
     for page_num in range(len(reader.pages)):
         page = reader.pages[page_num]
         text += page.extract_text() if page.extract_text() else ""
+    return text
+
+def extract_text_from_docx(file):
+    doc = Document(file)
+    text = ""
+    for para in doc.paragraphs:
+        text += para.text + "\n"
     return text
 
 def read_file(file):
@@ -43,6 +51,8 @@ def read_file(file):
             if df.empty:
                 raise ValueError("El archivo Excel está vacío.")
             return ' '.join(df.astype(str).values.flatten())
+        elif file.name.endswith('.docx'):
+            return extract_text_from_docx(file)
     except Exception as e:
         st.error(f"Error al leer el archivo: {str(e)}")
         return ""
@@ -216,8 +226,8 @@ def generate_report(meta, counts, comparisons, text_similarity, format='txt'):
 st.title('Contador y Comparador de Endosos en Documentos de Seguros Médicos')
 st.write("Suba dos documentos para contar y comparar los endosos y textos.")
 
-uploaded_file1 = st.file_uploader("Sube el primer documento (Modelo)", type=["pdf", "txt", "csv", "xls", "xlsx"])
-uploaded_file2 = st.file_uploader("Sube el segundo documento (Verificación)", type=["pdf", "txt", "csv", "xls", "xlsx"])
+uploaded_file1 = st.file_uploader("Sube el primer documento (Modelo)", type=["pdf", "txt", "csv", "xls", "xlsx", "docx"])
+uploaded_file2 = st.file_uploader("Sube el segundo documento (Verificación)", type=["pdf", "txt", "csv", "xls", "xlsx", "docx"])
 
 # Sección de Contador de Endosos
 st.header("Conteo de Endosos")
