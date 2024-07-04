@@ -6,7 +6,6 @@ from collections import Counter
 from transformers import BertTokenizer, BertModel
 import torch
 
-# Cache the BERT model and tokenizer
 @st.cache_resource
 def load_model():
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -24,23 +23,30 @@ def extract_text_from_pdf(file):
     return text
 
 def read_file(file):
-    if file.name.endswith('.txt'):
-        return file.read().decode("utf-8")
-    elif file.name.endswith('.pdf'):
-        return extract_text_from_pdf(file)
-    elif file.name.endswith('.csv'):
-        df = pd.read_csv(file)
-        return ' '.join(df.astype(str).values.flatten())
-    elif file.name.endswith('.xlsx') or file.name.endswith('.xls'):
-        df = pd.read_excel(file)
-        return ' '.join(df.astype(str).values.flatten())
-    return ""
+    try:
+        if file.name.endswith('.txt'):
+            return file.read().decode("utf-8")
+        elif file.name.endswith('.pdf'):
+            return extract_text_from_pdf(file)
+        elif file.name.endswith('.csv'):
+            df = pd.read_csv(file)
+            if df.empty:
+                raise ValueError("El archivo CSV está vacío.")
+            return ' '.join(df.astype(str).values.flatten())
+        elif file.name.endswith('.xlsx') or file.name.endswith('.xls'):
+            df = pd.read_excel(file)
+            if df.empty:
+                raise ValueError("El archivo Excel está vacío.")
+            return ' '.join(df.astype(str).values.flatten())
+    except Exception as e:
+        st.error(f"Error al leer el archivo: {str(e)}")
+        return ""
 
 def preprocess_and_extract_codes(text):
     text = text.lower()
     text = re.sub(r'\s+', ' ', text)
     text = re.sub(r'[^\w\s\.\-]', '', text)
-    regex_codes = r'\b[a-z]{2}\.\d{3}\.\d{3}\b'  # Exactly two letters at the start
+    regex_codes = r'\b[a-z]{2}\.\d{3}\.\d{3}\b'
     codes = re.findall(regex_codes, text)
     return Counter(codes)
 
@@ -74,25 +80,21 @@ if uploaded_file1 and uploaded_file2:
             text2 = read_file(uploaded_file2)
 
             if text1 and text2:
-                # Extraer y contar endosos
                 codes1 = preprocess_and_extract_codes(text1)
                 codes2 = preprocess_and_extract_codes(text2)
 
                 st.subheader("Resultados")
 
-                # Mostrar endosos únicos en Modelo
                 with st.expander(f"Endosos únicos en Modelo ({len(codes1.keys())})"):
                     for code, count in codes1.items():
                         st.code(f"{code} ({count})", language='plain')
                         st.button("Copiar", key=code, on_click=lambda x=code: st.write(f"Copiado: {x}"))
 
-                # Mostrar endosos únicos en Verificación
                 with st.expander(f"Endosos únicos en Verificación ({len(codes2.keys())})"):
                     for code, count in codes2.items():
                         st.code(f"{code} ({count})", language='plain')
                         st.button("Copiar", key=code+"ver", on_click=lambda x=code: st.write(f"Copiado: {x}"))
 
-                # Comparar endosos entre documentos
                 endosos_unicos_modelo = set(codes1.keys()) - set(codes2.keys())
                 endosos_unicos_verificacion = set(codes2.keys()) - set(codes1.keys())
 
@@ -108,6 +110,13 @@ if uploaded_file1 and uploaded_file2:
                         st.code(f"{code}", language='plain')
                         st.button("Copiar", key=code+"ver_model", on_click=lambda x=code: st.write(f"Copiado: {x}"))
 
+                # Filtrar endosos para la comparación de textos
+                endosos_comunes = {code for code in codes1 if code in codes2 and codes1[code] == 1 and codes2[code] == 1}
+
+                # Transformar el texto excluyendo los endosos no comunes y múltiples copias
+                clean_text1 = ' '.join([word for word in text1.split() if word not in endosos_comunes])
+                clean_text2 = ' '.join([word for word in text2.split() if word not in endosos_comunes])
+
             else:
                 st.error("No se pudo extraer texto de los documentos.")
         except Exception as e:
@@ -119,14 +128,7 @@ st.header("Comparación de Textos")
 if uploaded_file1 and uploaded_file2:
     with st.spinner('Procesando textos para comparación...'):
         try:
-            text1 = read_file(uploaded_file1)
-            text2 = read_file(uploaded_file2)
-
             if text1 and text2:
-                # Preprocesamiento del texto
-                clean_text1 = preprocess_text(text1)
-                clean_text2 = preprocess_text(text2)
-
                 # Generar embeddings y calcular similitud
                 embedding1 = encode_text(clean_text1)
                 embedding2 = encode_text(clean_text2)
