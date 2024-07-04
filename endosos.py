@@ -3,6 +3,17 @@ import re
 from PyPDF2 import PdfReader
 import pandas as pd
 from collections import Counter
+from transformers import BertTokenizer, BertModel
+import torch
+
+# Cache the BERT model and tokenizer
+@st.cache_resource
+def load_model():
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model = BertModel.from_pretrained('bert-base-uncased')
+    return tokenizer, model
+
+tokenizer, model = load_model()
 
 def extract_text_from_pdf(file):
     reader = PdfReader(file)
@@ -33,12 +44,29 @@ def preprocess_and_extract_codes(text):
     codes = re.findall(regex_codes, text)
     return Counter(codes)
 
+def preprocess_text(text):
+    text = text.lower()
+    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r'[^\w\s]', '', text)
+    return text
+
+def encode_text(text):
+    inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True, padding='max_length')
+    outputs = model(**inputs)
+    embeddings = outputs.last_hidden_state.mean(dim=1)
+    return embeddings
+
+def cosine_similarity(embedding1, embedding2):
+    return torch.nn.functional.cosine_similarity(embedding1, embedding2).item()
+
 st.title('Contador y Comparador de Endosos en Documentos de Seguros Médicos')
-st.write("Suba dos documentos para contar y comparar los endosos.")
+st.write("Suba dos documentos para contar y comparar los endosos y textos.")
 
 uploaded_file1 = st.file_uploader("Sube el primer documento (Modelo)", type=["pdf", "txt", "csv", "xls", "xlsx"])
 uploaded_file2 = st.file_uploader("Sube el segundo documento (Verificación)", type=["pdf", "txt", "csv", "xls", "xlsx"])
 
+# Sección de Contador de Endosos
+st.header("Conteo de Endosos")
 if uploaded_file1 and uploaded_file2:
     with st.spinner('Procesando documentos...'):
         try:
@@ -79,7 +107,36 @@ if uploaded_file1 and uploaded_file2:
                     for code in endosos_unicos_verificacion:
                         st.code(f"{code}", language='plain')
                         st.button("Copiar", key=code+"ver_model", on_click=lambda x=code: st.write(f"Copiado: {x}"))
+
             else:
                 st.error("No se pudo extraer texto de los documentos.")
         except Exception as e:
             st.error(f"Ocurrió un error al procesar los documentos: {str(e)}")
+
+# Sección de Comparación de Texto
+st.header("Comparación de Textos")
+
+if uploaded_file1 and uploaded_file2:
+    with st.spinner('Procesando textos para comparación...'):
+        try:
+            text1 = read_file(uploaded_file1)
+            text2 = read_file(uploaded_file2)
+
+            if text1 and text2:
+                # Preprocesamiento del texto
+                clean_text1 = preprocess_text(text1)
+                clean_text2 = preprocess_text(text2)
+
+                # Generar embeddings y calcular similitud
+                embedding1 = encode_text(clean_text1)
+                embedding2 = encode_text(clean_text2)
+
+                similarity = cosine_similarity(embedding1, embedding2)
+
+                st.success('Comparación de textos completada!')
+                st.subheader("Similitud entre los textos")
+                st.write(f"Similitud: {similarity:.2f}")
+            else:
+                st.error("No se pudo extraer texto de los documentos.")
+        except Exception as e:
+            st.error(f"Ocurrió un error al procesar los textos: {str(e)}")
