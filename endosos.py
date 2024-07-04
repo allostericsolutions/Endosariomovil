@@ -2,6 +2,7 @@ import streamlit as st
 import re
 from PyPDF2 import PdfReader
 import pandas as pd
+from collections import Counter
 
 # Función para extraer texto de un archivo PDF
 def extract_text_from_pdf(file):
@@ -26,14 +27,14 @@ def read_file(file):
         return ' '.join(df.astype(str).values.flatten())
     return ""
 
-# Función para extraer códigos alfanuméricos
+# Función para extraer códigos alfanuméricos y contarlos
 def preprocess_and_extract_codes(text):
     text = text.lower()
     text = re.sub(r'\s+', ' ', text)
     text = re.sub(r'[^\w\s\.\-]', '', text)
     regex_codes = r'[a-z]{2,3}\.\d{3}\.\d{3}'
     codes = re.findall(regex_codes, text)
-    return codes
+    return Counter(codes)   # Usar Counter para contar repeticiones
 
 # Interfaz de usuario en Streamlit
 st.title('Contador de Endosos en Documentos de Seguros Médicos')
@@ -48,24 +49,22 @@ if uploaded_file1 and uploaded_file2:
             text1 = read_file(uploaded_file1)
             text2 = read_file(uploaded_file2)
             
-            st.write("Texto del primer documento (primeros 200 caracteres):")
-            st.write(text1[:200])  # Mostrar las primeras 200 caracteres del texto extraído
-            st.write("Texto del segundo documento (primeros 200 caracteres):")
-            st.write(text2[:200])  # Mostrar las primeras 200 caracteres del texto extraído
-
             if text1 and text2:
+                # Extraer y contar endosos
                 codes1 = preprocess_and_extract_codes(text1)
                 codes2 = preprocess_and_extract_codes(text2)
                 
                 st.subheader("Resultados")
-                st.write(f"Cantidad de endosos en Modelo: {len(codes1)}")
-                st.write(f"Cantidad de endosos en Verificación: {len(codes2)}")
+                st.write(f"Cantidad de endosos únicos en Modelo: {len(codes1.keys())}")
+                st.write(f"Cantidad de endosos únicos en Verificación: {len(codes2.keys())}")
                 
-                st.subheader("Endosos en Modelo")
-                st.write(codes1)
+                st.subheader("Endosos en Modelo (con número de repeticiones)")
+                for code, count in codes1.items():
+                    st.write(f"Endoso: {code}, Repeticiones: {count}")
                 
-                st.subheader("Endosos en Verificación")
-                st.write(codes2)
+                st.subheader("Endosos en Verificación (con número de repeticiones)")
+                for code, count in codes2.items():
+                    st.write(f"Endoso: {code}, Repeticiones: {count}")
             else:
                 st.error("No se pudo extraer texto de los documentos.")
         except Exception as e:
