@@ -1,19 +1,9 @@
 import streamlit as st
 import re
-import pandas as pd
-from transformers import BertTokenizer, BertModel
-import torch
 from PyPDF2 import PdfReader
-import io
+import pandas as pd
 
-@st.cache_resource
-def load_model():
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    model = BertModel.from_pretrained('bert-base-uncased')
-    return tokenizer, model
-
-tokenizer, model = load_model()
-
+# Función para extraer texto de un archivo PDF
 def extract_text_from_pdf(file):
     reader = PdfReader(file)
     text = ""
@@ -22,6 +12,7 @@ def extract_text_from_pdf(file):
         text += page.extract_text() if page.extract_text() else ""
     return text
 
+# Función para leer y preprocesar archivos de diferentes tipos
 def read_file(file):
     if file.name.endswith('.txt'):
         return file.read().decode("utf-8")
@@ -35,146 +26,47 @@ def read_file(file):
         return ' '.join(df.astype(str).values.flatten())
     return ""
 
-def preprocess_text(text):
-    text = text.lower()
-    text = re.sub(r'\s+', ' ', text)
-    text = re.sub(r'[^\w\s]', '', text)
-    return text
-
-def encode_text(text):
-    inputs = tokenizer(text, return_tensors='pt', max_length=512, truncation=True, padding='max_length')
-    outputs = model(**inputs)
-    embeddings = outputs.last_hidden_state.mean(dim=1)
-    return embeddings
-
-def cosine_similarity(embedding1, embedding2):
-    return torch.nn.functional.cosine_similarity(embedding1, embedding2).item()
-
+# Función para extraer códigos alfanuméricos
 def preprocess_and_extract_codes(text):
-    st.write(f"Texto preprocesado: {text[:200]}")  # Mostrar las primeras 200 caracteres del texto preprocesado
     text = text.lower()
     text = re.sub(r'\s+', ' ', text)
     text = re.sub(r'[^\w\s\.\-]', '', text)
     regex_codes = r'[a-z]{2,3}\.\d{3}\.\d{3}'
     codes = re.findall(regex_codes, text)
-    st.write(f"Códigos extraídos: {codes}")  # Mostrar los códigos extraídos
     return codes
 
-st.title('Comparador de Documentos de Seguros Médicos')
-st.write("""
-### Suba dos documentos para comparar:
-1. Documento "Modelo"
-2. Documento "Verificación"
-(Suba archivos de hasta 200 MB)
-""")
+# Interfaz de usuario en Streamlit
+st.title('Contador de Endosos en Documentos de Seguros Médicos')
+st.write("Suba dos documentos para contar los endosos.")
 
 uploaded_file1 = st.file_uploader("Sube el primer documento (Modelo)", type=["pdf", "txt", "csv", "xls", "xlsx"])
 uploaded_file2 = st.file_uploader("Sube el segundo documento (Verificación)", type=["pdf", "txt", "csv", "xls", "xlsx"])
 
 if uploaded_file1 and uploaded_file2:
-    if uploaded_file1.size > 200 * 1024 * 1024 or uploaded_file2.size > 200 * 1024 * 1024:
-        st.error("El tamaño de cada archivo no debe exceder los 200 MB.")
-    else:
-        if st.button("Iniciar Comparación"):
-            with st.spinner('Procesando documentos...'):
-                try:
-                    text1 = read_file(uploaded_file1)
-                    text2 = read_file(uploaded_file2)
-                    
-                    st.write(f"Texto del primer documento: {text1[:200]}")  # Mostrar las primeras 200 caracteres del texto extraído
-                    st.write(f"Texto del segundo documento: {text2[:200]}")  # Mostrar las primeras 200 caracteres del texto extraído
+    with st.spinner('Procesando documentos...'):
+        try:
+            text1 = read_file(uploaded_file1)
+            text2 = read_file(uploaded_file2)
+            
+            st.write("Texto del primer documento (primeros 200 caracteres):")
+            st.write(text1[:200])  # Mostrar las primeras 200 caracteres del texto extraído
+            st.write("Texto del segundo documento (primeros 200 caracteres):")
+            st.write(text2[:200])  # Mostrar las primeras 200 caracteres del texto extraído
 
-                    if text1 and text2:
-                        clean_text1 = preprocess_text(text1)
-                        clean_text2 = preprocess_text(text2)
-                        
-                        codes1 = preprocess_and_extract_codes(clean_text1)
-                        codes2 = preprocess_and_extract_codes(clean_text2)
-                        
-                        codes_set1 = set(codes1)
-                        codes_set2 = set(codes2)
-                        
-                        identical = codes_set1 & codes_set2
-                        in_doc1_not_doc2 = codes_set1 - codes_set2
-                        in_doc2_not_doc1 = codes_set2 - codes_set1
-                        
-                        st.session_state.codes1 = codes1
-                        st.session_state.codes2 = codes2
-                        st.session_state.identical = identical
-                        st.session_state.in_doc1_not_doc2 = in_doc1_not_doc2
-                        st.session_state.in_doc2_not_doc1 = in_doc2_not_doc1
-                        
-                        embedding1 = encode_text(clean_text1)
-                        embedding2 = encode_text(clean_text2)
-                        
-                        similarity = cosine_similarity(embedding1, embedding2)
-
-                        st.session_state.similarity = similarity
-                        
-                        st.success('Comparación completada!')
-
-                        st.header("Resultados de la Comparación")
-                        st.subheader("Cantidad de Endosos/Condiciones")
-                        st.write(f"Modelo: {len(codes1)}")
-                        st.write(f"Verificación: {len(codes2)}")
-
-                        st.subheader("Códigos idénticos en ambos documentos")
-                        st.write(identical)
-                        
-                        st.subheader("Códigos en el documento Modelo pero no en Verificación")
-                        st.write(in_doc1_not_doc2)
-                        
-                        st.subheader("Códigos en el documento Verificación pero no en Modelo")
-                        st.write(in_doc2_not_doc1)
-
-                        st.subheader("Filtros")
-                        filter_option = st.selectbox("Seleccione tipo de comparación", ["Todos", "Idénticos", "Sólo en Modelo", "Sólo en Verificación"])
-                        
-                        if filter_option == "Idénticos":
-                            filtered_results = identical
-                        elif filter_option == "Sólo en Modelo":
-                            filtered_results = in_doc1_not_doc2
-                        elif filter_option == "Sólo en Verificación":
-                            filtered_results = in_doc2_not_doc1
-                        else:
-                            filtered_results = identical | in_doc1_not_doc2 | in_doc2_not_doc1
-                        
-                        search = st.text_input("Buscar un código específico")
-                        if search:
-                            filtered_results = {code for code in filtered_results if search in code}
-                        
-                        st.write(filtered_results)
-
-                        result_format = st.radio("Seleccione el formato de exportación", ('JSON', 'Texto Normal'))
-                        
-                        if st.button("Generar Documento"):
-                            result = {
-                                "Cantidad de endosos en Modelo": len(codes1),
-                                "Cantidad de endosos en Verificación": len(codes2),
-                                "Identical": list(identical),
-                                "In document 1 but not in document 2": list(in_doc1_not_doc2),
-                                "In document 2 but not in document 1": list(in_doc2_not_doc1)
-                            }
-                            
-                            if result_format == 'JSON':
-                                import json
-                                st.download_button("Descargar Resultados", data=json.dumps(result), file_name="resultados.json")
-                            else:
-                                result_text = f"""
-Cantidad de endosos en Modelo: {len(codes1)}
-Cantidad de endosos en Verificación: {len(codes2)}
-
-Códigos en ambos documentos:
-{', '.join(list(identical))}
-
-Códigos en el documento Modelo pero no en Verificación:
-{', '.join(list(in_doc1_not_doc2))}
-
-Códigos en el documento Verificación pero no en Modelo:
-{', '.join(list(in_doc2_not_doc1))}
-"""
-                                st.download_button("Descargar Resultados", data=result_text, file_name="resultados.txt")
-                    else:
-                        st.error("No se pudo extraer texto de los documentos.")
-                except Exception as e:
-                    st.error(f"Ocurrió un error al procesar los documentos: {str(e)}")
+            if text1 and text2:
+                codes1 = preprocess_and_extract_codes(text1)
+                codes2 = preprocess_and_extract_codes(text2)
+                
+                st.subheader("Resultados")
+                st.write(f"Cantidad de endosos en Modelo: {len(codes1)}")
+                st.write(f"Cantidad de endosos en Verificación: {len(codes2)}")
+                
+                st.subheader("Endosos en Modelo")
+                st.write(codes1)
+                
+                st.subheader("Endosos en Verificación")
+                st.write(codes2)
+            else:
+                st.error("No se pudo extraer texto de los documentos.")
+        except Exception as e:
+            st.error(f"Ocurrió un error al procesar los documentos: {str(e)}")
