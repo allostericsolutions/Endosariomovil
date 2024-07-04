@@ -4,7 +4,6 @@ from PyPDF2 import PdfReader
 import pandas as pd
 from collections import Counter
 
-# Función para extraer texto de un archivo PDF
 def extract_text_from_pdf(file):
     reader = PdfReader(file)
     text = ""
@@ -13,7 +12,6 @@ def extract_text_from_pdf(file):
         text += page.extract_text() if page.extract_text() else ""
     return text
 
-# Función para leer y preprocesar archivos de diferentes tipos
 def read_file(file):
     if file.name.endswith('.txt'):
         return file.read().decode("utf-8")
@@ -27,16 +25,14 @@ def read_file(file):
         return ' '.join(df.astype(str).values.flatten())
     return ""
 
-# Función para extraer códigos alfanuméricos y contarlos
 def preprocess_and_extract_codes(text):
     text = text.lower()
     text = re.sub(r'\s+', ' ', text)
     text = re.sub(r'[^\w\s\.\-]', '', text)
-    regex_codes = r'\b[a-z]{2}\.\d{3}\.\d{3}\b'  # Change to exactly 2 letters
+    regex_codes = r'\b[a-z]{2}\.\d{3}\.\d{3}\b'  # Exactly two letters at the start
     codes = re.findall(regex_codes, text)
     return Counter(codes)
 
-# Interfaz de usuario en Streamlit
 st.title('Contador y Comparador de Endosos en Documentos de Seguros Médicos')
 st.write("Suba dos documentos para contar y comparar los endosos.")
 
@@ -59,12 +55,14 @@ if uploaded_file1 and uploaded_file2:
                 # Mostrar endosos únicos en Modelo
                 with st.expander(f"Endosos únicos en Modelo ({len(codes1.keys())})"):
                     for code, count in codes1.items():
-                        st.write(f"{code} ({count})")
+                        st.code(f"{code} ({count})", language='plain')
+                        st.button("Copiar", key=code, on_click=lambda x=code: st.write(f"Copiado: {x}"))
 
                 # Mostrar endosos únicos en Verificación
                 with st.expander(f"Endosos únicos en Verificación ({len(codes2.keys())})"):
                     for code, count in codes2.items():
-                        st.write(f"{code} ({count})")
+                        st.code(f"{code} ({count})", language='plain')
+                        st.button("Copiar", key=code+"ver", on_click=lambda x=code: st.write(f"Copiado: {x}"))
 
                 # Comparar endosos entre documentos
                 endosos_unicos_modelo = set(codes1.keys()) - set(codes2.keys())
@@ -74,11 +72,13 @@ if uploaded_file1 and uploaded_file2:
 
                 with st.expander(f"En Modelo pero no en Verificación ({len(endosos_unicos_modelo)})"):
                     for code in endosos_unicos_modelo:
-                        st.write(f"{code}")
+                        st.code(f"{code}", language='plain')
+                        st.button("Copiar", key=code+"mod", on_click=lambda x=code: st.write(f"Copiado: {x}"))
 
                 with st.expander(f"En Verificación pero no en Modelo ({len(endosos_unicos_verificacion)})"):
                     for code in endosos_unicos_verificacion:
-                        st.write(f"{code}")
+                        st.code(f"{code}", language='plain')
+                        st.button("Copiar", key=code+"ver_model", on_click=lambda x=code: st.write(f"Copiado: {x}"))
             else:
                 st.error("No se pudo extraer texto de los documentos.")
         except Exception as e:
