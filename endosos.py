@@ -4,7 +4,6 @@ from PyPDF2 import PdfReader
 import pandas as pd
 from collections import Counter
 
-# Función para extraer texto de un archivo PDF
 def extract_text_from_pdf(file):
     reader = PdfReader(file)
     text = ""
@@ -13,7 +12,6 @@ def extract_text_from_pdf(file):
         text += page.extract_text() if page.extract_text() else ""
     return text
 
-# Función para leer y preprocesar archivos de diferentes tipos
 def read_file(file):
     if file.name.endswith('.txt'):
         return file.read().decode("utf-8")
@@ -27,18 +25,16 @@ def read_file(file):
         return ' '.join(df.astype(str).values.flatten())
     return ""
 
-# Función para extraer códigos alfanuméricos y contarlos
 def preprocess_and_extract_codes(text):
     text = text.lower()
     text = re.sub(r'\s+', ' ', text)
     text = re.sub(r'[^\w\s\.\-]', '', text)
     regex_codes = r'[a-z]{2,3}\.\d{3}\.\d{3}'
     codes = re.findall(regex_codes, text)
-    return Counter(codes)   # Usar Counter para contar repeticiones
+    return Counter(codes)
 
-# Interfaz de usuario en Streamlit
-st.title('Contador de Endosos en Documentos de Seguros Médicos')
-st.write("Suba dos documentos para contar los endosos.")
+st.title('Contador y Comparador de Endosos en Documentos de Seguros Médicos')
+st.write("Suba dos documentos para contar y comparar los endosos.")
 
 uploaded_file1 = st.file_uploader("Sube el primer documento (Modelo)", type=["pdf", "txt", "csv", "xls", "xlsx"])
 uploaded_file2 = st.file_uploader("Sube el segundo documento (Verificación)", type=["pdf", "txt", "csv", "xls", "xlsx"])
@@ -55,16 +51,30 @@ if uploaded_file1 and uploaded_file2:
                 codes2 = preprocess_and_extract_codes(text2)
                 
                 st.subheader("Resultados")
-                st.write(f"Cantidad de endosos únicos en Modelo: {len(codes1.keys())}")
-                st.write(f"Cantidad de endosos únicos en Verificación: {len(codes2.keys())}")
+
+                # Mostrar endosos únicos en Modelo
+                with st.expander(f"Endosos únicos en Modelo ({len(codes1.keys())})"):
+                    for code, count in codes1.items():
+                        st.write(f"{code} ({count})")
                 
-                st.subheader("Endosos en Modelo (con número de repeticiones)")
-                for code, count in codes1.items():
-                    st.write(f"Endoso: {code}, Repeticiones: {count}")
+                # Mostrar endosos únicos en Verificación
+                with st.expander(f"Endosos únicos en Verificación ({len(codes2.keys())})"):
+                    for code, count in codes2.items():
+                        st.write(f"{code} ({count})")
                 
-                st.subheader("Endosos en Verificación (con número de repeticiones)")
-                for code, count in codes2.items():
-                    st.write(f"Endoso: {code}, Repeticiones: {count}")
+                # Comparar endosos entre documentos
+                endosos_unicos_modelo = set(codes1.keys()) - set(codes2.keys())
+                endosos_unicos_verificacion = set(codes2.keys()) - set(codes1.keys())
+
+                st.subheader("Comparación de Endosos Entre Documentos")
+                
+                with st.expander(f"En Modelo pero no en Verificación ({len(endosos_unicos_modelo)})"):
+                    for code in endosos_unicos_modelo:
+                        st.write(f"{code}")
+                
+                with st.expander(f"En Verificación pero no en Modelo ({len(endosos_unicos_verificacion)})"):
+                    for code in endosos_unicos_verificacion:
+                        st.write(f"{code}")
             else:
                 st.error("No se pudo extraer texto de los documentos.")
         except Exception as e:
