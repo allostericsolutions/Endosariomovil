@@ -6,7 +6,7 @@ import torch
 from PyPDF2 import PdfReader
 import io
 
-@st.cache(allow_output_mutation=True)
+@st.cache_resource
 def load_model():
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     model = BertModel.from_pretrained('bert-base-uncased')
@@ -18,7 +18,8 @@ def extract_text_from_pdf(file):
     reader = PdfReader(file)
     text = ""
     for page_num in range(len(reader.pages)):
-        text += reader.pages[page_num].extract_text()
+        page = reader.pages[page_num]
+        text += page.extract_text() if page.extract_text() else ""
     return text
 
 def read_file(file):
@@ -50,14 +51,15 @@ def cosine_similarity(embedding1, embedding2):
     return torch.nn.functional.cosine_similarity(embedding1, embedding2).item()
 
 def preprocess_and_extract_codes(text):
+    st.write(f"Texto preprocesado: {text[:200]}")  # Mostrar las primeras 200 caracteres del texto preprocesado
     text = text.lower()
     text = re.sub(r'\s+', ' ', text)
     text = re.sub(r'[^\w\s\.\-]', '', text)
     regex_codes = r'[a-z]{2,3}\.\d{3}\.\d{3}'
     codes = re.findall(regex_codes, text)
+    st.write(f"Códigos extraídos: {codes}")  # Mostrar los códigos extraídos
     return codes
 
-# Interfaz de usuario en Streamlit
 st.title('Comparador de Documentos de Seguros Médicos')
 st.write("""
 ### Suba dos documentos para comparar:
@@ -79,15 +81,15 @@ if uploaded_file1 and uploaded_file2:
                     text1 = read_file(uploaded_file1)
                     text2 = read_file(uploaded_file2)
                     
+                    st.write(f"Texto del primer documento: {text1[:200]}")  # Mostrar las primeras 200 caracteres del texto extraído
+                    st.write(f"Texto del segundo documento: {text2[:200]}")  # Mostrar las primeras 200 caracteres del texto extraído
+
                     if text1 and text2:
                         clean_text1 = preprocess_text(text1)
                         clean_text2 = preprocess_text(text2)
                         
-                        # Extraer y comparar códigos alfanuméricos
                         codes1 = preprocess_and_extract_codes(clean_text1)
                         codes2 = preprocess_and_extract_codes(clean_text2)
-                        st.session_state.codes1 = codes1
-                        st.session_state.codes2 = codes2
                         
                         codes_set1 = set(codes1)
                         codes_set2 = set(codes2)
@@ -96,74 +98,35 @@ if uploaded_file1 and uploaded_file2:
                         in_doc1_not_doc2 = codes_set1 - codes_set2
                         in_doc2_not_doc1 = codes_set2 - codes_set1
                         
+                        st.session_state.codes1 = codes1
+                        st.session_state.codes2 = codes2
                         st.session_state.identical = identical
                         st.session_state.in_doc1_not_doc2 = in_doc1_not_doc2
                         st.session_state.in_doc2_not_doc1 = in_doc2_not_doc1
                         
-                        # Generar embeddings y calcular similitud
                         embedding1 = encode_text(clean_text1)
                         embedding2 = encode_text(clean_text2)
                         
                         similarity = cosine_similarity(embedding1, embedding2)
-                        
+
                         st.session_state.similarity = similarity
                         
                         st.success('Comparación completada!')
 
-                        # Crear el documento de reporte automáticamente después de completar la comparación
-                        result_format = st.radio("Seleccione el formato de exportación", ('JSON', 'Texto Normal'))
-                        result = {
-                            "Cantidad de endosos en Modelo": len(codes1),
-                            "Cantidad de endosos en Verificación": len(codes2),
-                            "Identical": list(identical),
-                            "In document 1 but not in document 2": list(in_doc1_not_doc2),
-                            "In document 2 but not in document 1": list(in_doc2_not_doc1)
-                        }
-                        
-                        if result_format == 'JSON':
-                            import json
-                            st.download_button("Descargar Resultados", data=json.dumps(result), file_name="resultados.json")
-                        else:
-                            result_text = f"""
-Cantidad de endosos en Modelo: {len(codes1)}
-Cantidad de endosos en Verificación: {len(codes2)}
-
-Códigos en ambos documentos:
-{', '.join(list(identical))}
-
-Códigos en el documento Modelo pero no en Verificación:
-{', '.join(list(in_doc1_not_doc2))}
-
-Códigos en el documento Verificación pero no en Modelo:
-{', '.join(list(in_doc2_not_doc1))}
-"""
-                            st.download_button("Descargar Resultados", data=result_text, file_name="resultados.txt")
-
-                        # Mostrar resultados
                         st.header("Resultados de la Comparación")
                         st.subheader("Cantidad de Endosos/Condiciones")
                         st.write(f"Modelo: {len(codes1)}")
                         st.write(f"Verificación: {len(codes2)}")
 
                         st.subheader("Códigos idénticos en ambos documentos")
-                        if identical:
-                            st.write(identical)
-                        else:
-                            st.write("No hay códigos idénticos.")
-
-                        st.subheader("Códigos en el documento Modelo pero no en Verificación")
-                        if in_doc1_not_doc2:
-                            st.write(in_doc1_not_doc2)
-                        else:
-                            st.write("No hay códigos exclusivos en el documento Modelo.")
-
-                        st.subheader("Códigos en el documento Verificación pero no en Modelo")
-                        if in_doc2_not_doc1:
-                            st.write(in_doc2_not_doc1)
-                        else:
-                            st.write("No hay códigos exclusivos en el documento Verificación.")
+                        st.write(identical)
                         
-                        # Añadir filtros y barra de búsqueda
+                        st.subheader("Códigos en el documento Modelo pero no en Verificación")
+                        st.write(in_doc1_not_doc2)
+                        
+                        st.subheader("Códigos en el documento Verificación pero no en Modelo")
+                        st.write(in_doc2_not_doc1)
+
                         st.subheader("Filtros")
                         filter_option = st.selectbox("Seleccione tipo de comparación", ["Todos", "Idénticos", "Sólo en Modelo", "Sólo en Verificación"])
                         
@@ -182,9 +145,36 @@ Códigos en el documento Verificación pero no en Modelo:
                         
                         st.write(filtered_results)
 
+                        result_format = st.radio("Seleccione el formato de exportación", ('JSON', 'Texto Normal'))
+                        
+                        if st.button("Generar Documento"):
+                            result = {
+                                "Cantidad de endosos en Modelo": len(codes1),
+                                "Cantidad de endosos en Verificación": len(codes2),
+                                "Identical": list(identical),
+                                "In document 1 but not in document 2": list(in_doc1_not_doc2),
+                                "In document 2 but not in document 1": list(in_doc2_not_doc1)
+                            }
+                            
+                            if result_format == 'JSON':
+                                import json
+                                st.download_button("Descargar Resultados", data=json.dumps(result), file_name="resultados.json")
+                            else:
+                                result_text = f"""
+Cantidad de endosos en Modelo: {len(codes1)}
+Cantidad de endosos en Verificación: {len(codes2)}
+
+Códigos en ambos documentos:
+{', '.join(list(identical))}
+
+Códigos en el documento Modelo pero no en Verificación:
+{', '.join(list(in_doc1_not_doc2))}
+
+Códigos en el documento Verificación pero no en Modelo:
+{', '.join(list(in_doc2_not_doc1))}
+"""
+                                st.download_button("Descargar Resultados", data=result_text, file_name="resultados.txt")
                     else:
                         st.error("No se pudo extraer texto de los documentos.")
                 except Exception as e:
                     st.error(f"Ocurrió un error al procesar los documentos: {str(e)}")
-
-
