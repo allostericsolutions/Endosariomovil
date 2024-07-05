@@ -8,6 +8,7 @@ from datetime import datetime
 import csv
 from fpdf import FPDF
 from docx import Document
+from transformers import BertTokenizer, BertModel
 
 @st.cache_resource
 def load_model():
@@ -16,6 +17,7 @@ def load_model():
     return tokenizer, model
 
 tokenizer, model = load_model()
+
 def extract_text_from_pdf(file):
     reader = PdfReader(file)
     text = ""
@@ -89,34 +91,39 @@ def generate_report(meta, counts, comparisons, format='txt'):
     # ... (función `generate_report` similar a la versión anterior, 
     #     pero adaptando la sección de comparación de endosos)
 
-st.title('Contador y Comparador de Endosos en Documentos de Seguros Médicos')
-st.write("Suba dos documentos para contar y comparar los endosos y textos.")
+def main():
+    st.title('Contador y Comparador de Endosos en Documentos de Seguros Médicos')
+    st.write("Suba dos documentos para contar y comparar los endosos y textos.")
 
-uploaded_file1 = st.file_uploader("Sube el primer documento (Modelo)", type=["pdf", "txt", "csv", "xls", "xlsx", "docx"])
-uploaded_file2 = st.file_uploader("Sube el segundo documento (Verificación)", type=["pdf", "txt", "csv", "xls", "xlsx", "docx"])
+    uploaded_file1 = st.file_uploader("Sube el primer documento (Modelo)", type=["pdf", "txt", "csv", "xls", "xlsx", "docx"])
+    uploaded_file2 = st.file_uploader("Sube el segundo documento (Verificación)", type=["pdf", "txt", "csv", "xls", "xlsx", "docx"])
 
-if uploaded_file1 and uploaded_file2:
-    with st.spinner('Procesando documentos...'):
-        try:
-            text1 = read_file(uploaded_file1)
-            text2 = read_file(uploaded_file2)
+    if uploaded_file1 and uploaded_file2:
+        with st.spinner('Procesando documentos...'):
+            try:
+                text1 = read_file(uploaded_file1)
+                text2 = read_file(uploaded_file2)
 
-            if text1 and text2:
-                codes1 = preprocess_and_extract_codes(text1)
-                codes2 = preprocess_and_extract_codes(text2)
+                if text1 and text2:
+                    codes1 = preprocess_and_extract_codes(text1)
+                    codes2 = preprocess_and_extract_codes(text2)
 
-                # ... (mostrar resultados de códigos únicos)
+                    # ... (mostrar resultados de códigos únicos)
 
-                common_codes = set(codes1) & set(codes2)
+                    common_codes = set(codes1) & set(codes2)
 
-                st.subheader("Comparación de Endosos Entre Documentos")
-                for code in common_codes:
-                    comparison_result = compare_endorsements(text1, text2, code)
-                    st.write(f"Comparación para el código {code}: **{comparison_result}**")
+                    st.subheader("Comparación de Endosos Entre Documentos")
+                    for code in common_codes:
+                        comparison_result = compare_endorsements(text1, text2, code)
+                        st.write(f"Comparación para el código {code}: **{comparison_result}**")
 
-                # ... (resto del código para generar el reporte)
+                    # ... (resto del código para generar el reporte)
 
-            else:
-                st.error("No se pudo extraer texto de los documentos.")
-        except Exception as e:
-            st.error(f"Ocurrió un error al procesar los documentos: {str(e)}")
+                else:
+                    st.error("No se pudo extraer texto de los documentos.")
+            except Exception as e:
+                st.error(f"Ocurrió un error al procesar los documentos: {str(e)}")
+
+# Call the main function to start the app
+if __name__ == "__main__":
+    main()
