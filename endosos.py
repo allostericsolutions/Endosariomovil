@@ -63,7 +63,7 @@ def preprocess_and_extract_codes(text):
     text = re.sub(r'[^\w\s\.\-]', '', text)
     regex_codes = r'\b[a-z]{2}\.\d{3}\.\d{3}\b'
     codes = re.findall(regex_codes, text)
-    return Counter(codes)
+    return sorted(set(codes))  # Return sorted unique codes
 
 def preprocess_text(text):
     text = text.lower()
@@ -89,16 +89,16 @@ def generate_report(meta, counts, comparisons, text_similarity, format='txt'):
         report.write(f"Documento 2 (Verificación): {meta['file2_name']}, Tamaño: {meta['file2_size']} bytes\n\n")
 
         report.write(f"Cantidad de Endosos Únicos:\n")
-        report.write(f"Modelo: {counts['model']}\n")
-        report.write(f"Verificación: {counts['verification']}\n\n")
+        report.write(f"Modelo: {len(counts['codes1'])}\n")
+        report.write(f"Verificación: {len(counts['codes2'])}\n\n")
 
         report.write(f"Endosos Únicos en Modelo:\n")
-        for code, count in counts['codes1'].items():
-            report.write(f"{code} ({count})\n")
+        for code in counts['codes1']:
+            report.write(f"{code}\n")
 
         report.write(f"\nEndosos Únicos en Verificación:\n")
-        for code, count in counts['codes2'].items():
-            report.write(f"{code} ({count})\n")
+        for code in counts['codes2']:
+            report.write(f"{code}\n")
 
         report.write(f"\nEndosos en Modelo pero no en Verificación:\n")
         for code in comparisons['unique_model']:
@@ -122,18 +122,18 @@ def generate_report(meta, counts, comparisons, text_similarity, format='txt'):
         writer.writerow([])
 
         writer.writerow(["Cantidad de Endosos Únicos"])
-        writer.writerow(["Modelo", counts['model']])
-        writer.writerow(["Verificación", counts['verification']])
+        writer.writerow(["Modelo", len(counts['codes1'])])
+        writer.writerow(["Verificación", len(counts['codes2'])])
         writer.writerow([])
 
         writer.writerow(["Endosos Únicos en Modelo"])
-        for code, count in counts['codes1'].items():
-            writer.writerow([code, count])
+        for code in counts['codes1']:
+            writer.writerow([code])
 
         writer.writerow([])
         writer.writerow(["Endosos Únicos en Verificación"])
-        for code, count in counts['codes2'].items():
-            writer.writerow([code, count])
+        for code in counts['codes2']:
+            writer.writerow([code])
 
         writer.writerow([])
         writer.writerow(["Endosos en Modelo pero no en Verificación"])
@@ -162,14 +162,14 @@ def generate_report(meta, counts, comparisons, text_similarity, format='txt'):
 
         df_counts = pd.DataFrame({
             "Categoría": ["Modelo", "Verificación"],
-            "Cantidad de Endosos Únicos": [counts['model'], counts['verification']]
+            "Cantidad de Endosos Únicos": [len(counts['codes1']), len(counts['codes2'])]
         })
 
-        df_codes1 = pd.DataFrame(list(counts['codes1'].items()), columns=["Endoso", "Repeticiones"])
-        df_codes2 = pd.DataFrame(list(counts['codes2'].items()), columns=["Endoso", "Repeticiones"])
+        df_codes1 = pd.DataFrame(counts['codes1'], columns=["Endoso"])
+        df_codes2 = pd.DataFrame(counts['codes2'], columns=["Endoso"])
 
-        df_unique_model = pd.DataFrame(list(comparisons['unique_model']), columns=["Endosos en Modelo pero no en Verificación"])
-        df_unique_verification = pd.DataFrame(list(comparisons['unique_verification']), columns=["Endosos en Verificación pero no en Modelo"])
+        df_unique_model = pd.DataFrame(comparisons['unique_model'], columns=["Endosos en Modelo pero no en Verificación"])
+        df_unique_verification = pd.DataFrame(comparisons['unique_verification'], columns=["Endosos en Verificación pero no en Modelo"])
 
         df_meta.to_excel(writer, sheet_name='Meta', index=False)
         df_counts.to_excel(writer, sheet_name='Conteo de Endosos', index=False)
@@ -193,18 +193,18 @@ def generate_report(meta, counts, comparisons, text_similarity, format='txt'):
         pdf.ln(10)
 
         pdf.cell(200, 10, txt="Cantidad de Endosos Únicos", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Modelo: {counts['model']}", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Verificación: {counts['verification']}", ln=True, align='L')
+        pdf.cell(200, 10, txt=f"Modelo: {len(counts['codes1'])}", ln=True, align='L')
+        pdf.cell(200, 10, txt=f"Verificación: {len(counts['codes2'])}", ln=True, align='L')
         pdf.ln(10)
 
         pdf.cell(200, 10, txt="Endosos Únicos en Modelo", ln=True, align='L')
-        for code, count in counts['codes1'].items():
-            pdf.cell(200, 10, txt=f"{code} ({count})", ln=True, align='L')
+        for code in counts['codes1']:
+            pdf.cell(200, 10, txt=f"{code}", ln=True, align='L')
 
         pdf.ln(10)
         pdf.cell(200, 10, txt="Endosos Únicos en Verificación", ln=True, align='L')
-        for code, count in counts['codes2'].items():
-            pdf.cell(200, 10, txt=f"{code} ({count})", ln=True, align='L')
+        for code in counts['codes2']:
+            pdf.cell(200, 10, txt=f"{code}", ln=True, align='L')
 
         pdf.ln(10)
         pdf.cell(200, 10, txt="Endosos en Modelo pero no en Verificación", ln=True, align='L')
@@ -243,18 +243,18 @@ if uploaded_file1 and uploaded_file2:
 
                 st.subheader("Resultados")
 
-                with st.expander(f"Endosos únicos en Modelo ({len(codes1.keys())})"):
-                    for code, count in codes1.items():
-                        st.code(f"{code} ({count})", language='plain')
+                with st.expander(f"Endosos únicos en Modelo ({len(codes1)})"):
+                    for code in codes1:
+                        st.code(f"{code}", language='plain')
                         st.button("Copiar", key=code, on_click=lambda x=code: st.write(f"Copiado: {x}"))
 
-                with st.expander(f"Endosos únicos en Verificación ({len(codes2.keys())})"):
-                    for code, count in codes2.items():
-                        st.code(f"{code} ({count})", language='plain')
+                with st.expander(f"Endosos únicos en Verificación ({len(codes2)})"):
+                    for code in codes2:
+                        st.code(f"{code}", language='plain')
                         st.button("Copiar", key=code+"ver", on_click=lambda x=code: st.write(f"Copiado: {x}"))
 
-                endosos_unicos_modelo = set(codes1.keys()) - set(codes2.keys())
-                endosos_unicos_verificacion = set(codes2.keys()) - set(codes1.keys())
+                endosos_unicos_modelo = set(codes1) - set(codes2)
+                endosos_unicos_verificacion = set(codes2) - set(codes1)
 
                 st.subheader("Comparación de Endosos Entre Documentos")
 
@@ -269,7 +269,7 @@ if uploaded_file1 and uploaded_file2:
                         st.button("Copiar", key=code+"ver_model", on_click=lambda x=code: st.write(f"Copiado: {x}"))
 
                 # Filtrar endosos para la comparación de textos
-                endosos_comunes = {code for code in codes1 if code in codes2 and codes1[code] == 1 and codes2[code] == 1}
+                endosos_comunes = {code for code in codes1 if code in codes2}
 
                 # Transformar el texto excluyendo los endosos no comunes y múltiples copias
                 clean_text1 = ' '.join([word for word in text1.split() if word not in endosos_comunes])
@@ -300,8 +300,6 @@ if uploaded_file1 and uploaded_file2:
                                         "file2_size": uploaded_file2.size
                                     }
                                     counts = {
-                                        "model": len(codes1.keys()),
-                                        "verification": len(codes2.keys()),
                                         "codes1": codes1,
                                         "codes2": codes2
                                     }
