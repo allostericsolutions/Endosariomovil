@@ -21,11 +21,10 @@ def load_model():
 tokenizer, model = load_model()
 
 def extract_text_from_pdf(file):
-    reader = PdfReader(file)
-    text = ""
-    for page_num in range(len(reader.pages)):
-        page = reader.pages[page_num]
-        text += page.extract_text() if page.extract_text() else ""
+    with pdfplumber.open(file) as pdf:
+        text = ""
+        for page in pdf.pages:
+            text += page.extract_text() if page.extract_text() else ""
     return text
 
 def extract_text_from_docx(file):
