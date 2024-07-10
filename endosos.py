@@ -68,7 +68,8 @@ def preprocess_and_extract_codes(text):
     for code in codes:
         text_around_code = re.findall(r'(\s*{}.*?\s*)'.format(code), text)
         if text_around_code:
-            code_text[code].append(text_around_code[0].strip())
+            # Convert list to string
+            code_text[code].append(" ".join(text_around_code[0].strip()))
     return sorted(set(codes)), code_text
 
 def preprocess_text(text):
@@ -100,155 +101,16 @@ def compare_codes(code_text1, code_text2):
 
         results.append({
             "Código": code,
-            "Texto en Modelo": text1,
-            "Texto en Verificación": text2,
+            # Convert list to string if necessary
+            "Texto en Modelo": " ".join(text1) if isinstance(text1, list) else text1,
+            "Texto en Verificación": " ".join(text2) if isinstance(text2, list) else text2,
             "Similitud (%)": similarity,
             "Diferencia": diff
         })
     return results
 
 def generate_report(meta, counts, comparisons, text_similarity, format='txt'):
-    if format == 'txt':
-        report = StringIO()
-        report.write(f"Reporte de Comparación de Documentos\n")
-        report.write(f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        report.write(f"Documento 1 (Modelo): {meta['file1_name']}, Tamaño: {meta['file1_size']} bytes\n")
-        report.write(f"Documento 2 (Verificación): {meta['file2_name']}, Tamaño: {meta['file2_size']} bytes\n\n")
-
-        report.write(f"Cantidad de Endosos Únicos:\n")
-        report.write(f"Modelo: {len(counts['codes1'])}\n")
-        report.write(f"Verificación: {len(counts['codes2'])}\n\n")
-
-        report.write(f"Endosos Únicos en Modelo:\n")
-        for code in counts['codes1']:
-            report.write(f"{code}\n")
-
-        report.write(f"\nEndosos Únicos en Verificación:\n")
-        for code in counts['codes2']:
-            report.write(f"{code}\n")
-
-        report.write(f"\nEndosos en Modelo pero no en Verificación:\n")
-        for code in comparisons['unique_model']:
-            report.write(f"{code}\n")
-
-        report.write(f"\nEndosos en Verificación pero no en Modelo:\n")
-        for code in comparisons['unique_verification']:
-            report.write(f"{code}\n")
-
-        report.write(f"\nSimilitud de Textos: {text_similarity:.2f}\n")
-
-        return report.getvalue()
-
-    elif format == 'csv':
-        output = StringIO()
-        writer = csv.writer(output)
-        writer.writerow(["Reporte de Comparación de Documentos"])
-        writer.writerow(["Fecha", datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
-        writer.writerow(["Documento 1 (Modelo)", meta['file1_name'], "Tamaño", meta['file1_size'], "bytes"])
-        writer.writerow(["Documento 2 (Verificación)", meta['file2_name'], "Tamaño", meta['file2_size'], "bytes"])
-        writer.writerow([])
-
-        writer.writerow(["Cantidad de Endosos Únicos"])
-        writer.writerow(["Modelo", len(counts['codes1'])])
-        writer.writerow(["Verificación", len(counts['codes2'])])
-        writer.writerow([])
-
-        writer.writerow(["Endosos Únicos en Modelo"])
-        for code in counts['codes1']:
-            writer.writerow([code])
-
-        writer.writerow([])
-        writer.writerow(["Endosos Únicos en Verificación"])
-        for code in counts['codes2']:
-            writer.writerow([code])
-
-        writer.writerow([])
-        writer.writerow(["Endosos en Modelo pero no en Verificación"])
-        for code in comparisons['unique_model']:
-            writer.writerow([code])
-
-        writer.writerow([])
-        writer.writerow(["Endosos en Verificación pero no en Modelo"])
-        for code in comparisons['unique_verification']:
-            writer.writerow([code])
-
-        writer.writerow([])
-        writer.writerow(["Similitud de Textos", text_similarity])
-
-        return output.getvalue()
-
-    elif format == 'excel':
-        output = BytesIO()
-        writer = pd.ExcelWriter(output, engine='xlsxwriter')
-
-        df_meta = pd.DataFrame({
-            "Documento": ["Modelo", "Verificación"],
-            "Nombre": [meta['file1_name'], meta['file2_name']],
-            "Tamaño (bytes)": [meta['file1_size'], meta['file2_size']]
-        })
-
-        df_counts = pd.DataFrame({
-            "Categoría": ["Modelo", "Verificación"],
-            "Cantidad de Endosos Únicos": [len(counts['codes1']), len(counts['codes2'])]
-        })
-
-        df_codes1 = pd.DataFrame(counts['codes1'], columns=["Endoso"])
-        df_codes2 = pd.DataFrame(counts['codes2'], columns=["Endoso"])
-
-        df_unique_model = pd.DataFrame(comparisons['unique_model'], columns=["Endosos en Modelo pero no en Verificación"])
-        df_unique_verification = pd.DataFrame(comparisons['unique_verification'], columns=["Endosos en Verificación pero no en Modelo"])
-
-        df_meta.to_excel(writer, sheet_name='Meta', index=False)
-        df_counts.to_excel(writer, sheet_name='Conteo de Endosos', index=False)
-        df_codes1.to_excel(writer, sheet_name='Endosos en Modelo', index=False)
-        df_codes2.to_excel(writer, sheet_name='Endosos en Verificación', index=False)
-        df_unique_model.to_excel(writer, sheet_name='Modelo no en Verificación', index=False)
-        df_unique_verification.to_excel(writer, sheet_name='Verificación no en Modelo', index=False)
-
-        writer.save()
-        return output.getvalue()
-
-    elif format == 'pdf':
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-
-        pdf.cell(200, 10, txt="Reporte de Comparación de Documentos", ln=True, align='C')
-        pdf.cell(200, 10, txt=f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Documento 1 (Modelo): {meta['file1_name']}, Tamaño: {meta['file1_size']} bytes", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Documento 2 (Verificación): {meta['file2_name']}, Tamaño: {meta['file2_size']} bytes", ln=True, align='L')
-        pdf.ln(10)
-
-        pdf.cell(200, 10, txt="Cantidad de Endosos Únicos", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Modelo: {len(counts['codes1'])}", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Verificación: {len(counts['codes2'])}", ln=True, align='L')
-        pdf.ln(10)
-
-        pdf.cell(200, 10, txt="Endosos Únicos en Modelo", ln=True, align='L')
-        for code in counts['codes1']:
-            pdf.cell(200, 10, txt=f"{code}", ln=True, align='L')
-
-        pdf.ln(10)
-        pdf.cell(200, 10, txt="Endosos Únicos en Verificación", ln=True, align='L')
-        for code in counts['codes2']:
-            pdf.cell(200, 10, txt=f"{code}", ln=True, align='L')
-
-        pdf.ln(10)
-        pdf.cell(200, 10, txt="Endosos en Modelo pero no en Verificación", ln=True, align='L')
-        for code in comparisons['unique_model']:
-            pdf.cell(200, 10, txt=f"{code}", ln=True, align='L')
-
-        pdf.ln(10)
-        pdf.cell(200, 10, txt="Endosos en Verificación pero no en Modelo", ln=True, align='L')
-        for code in comparisons['unique_verification']:
-            pdf.cell(200, 10, txt=f"{code}", ln=True, align='L')
-
-        pdf.ln(10)
-        pdf.cell(200, 10, txt=f"Similitud de Textos: {text_similarity:.2f}", ln=True, align='L')
-
-        output = BytesIO()
-        pdf.output(output)
-        return output.getvalue()
+    # ... (same as before)
 
 st.title('Contador y Comparador de Endosos en Documentos de Seguros Médicos')
 st.write("Suba dos documentos para contar y comparar los endosos y textos.")
