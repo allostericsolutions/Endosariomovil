@@ -1,6 +1,7 @@
 import streamlit as st
 import pdfplumber
 import re
+import os
 
 # Función para extraer y segmentar el texto del PDF
 def extract_text_from_pdf(pdf_path):
@@ -35,11 +36,11 @@ uploaded_pdf = st.file_uploader("Sube un archivo PDF", type=["pdf"])
 if uploaded_pdf:
     # Guardar el archivo temporal
     pdf_path = "temp_documento.pdf"
-    with open(pdf_path, "wb") as f:
-        f.write(uploaded_pdf.read())
-
-    # Extraer texto del PDF
     try:
+        with open(pdf_path, "wb") as f:
+            f.write(uploaded_pdf.read())
+
+        # Extraer texto del PDF
         pdf_text_segments = extract_text_from_pdf(pdf_path)
         st.write("Textos extraídos del PDF:")
         st.write(pdf_text_segments)
@@ -47,6 +48,7 @@ if uploaded_pdf:
         st.error(f"Error al procesar el archivo PDF: {e}")
     finally:
         # Limpiar archivo temporal
-        os.remove(pdf_path)
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
 else:
     st.write("Por favor, sube un archivo PDF.")
