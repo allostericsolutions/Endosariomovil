@@ -11,6 +11,8 @@ from datetime import datetime
 import csv
 from fpdf import FPDF
 from docx import Document
+from collections import defaultdict
+from fuzzywuzzy import fuzz
 
 @st.cache_resource
 def load_model():
@@ -62,7 +64,12 @@ def preprocess_and_extract_codes(text):
     text = re.sub(r'[^\w\s\.\-]', '', text)
     regex_codes = r'\b[a-z]{2}\.\d{3}\.\d{3}\b'
     codes = re.findall(regex_codes, text)
-    return sorted(set(codes))  # Return sorted unique codes
+    code_text = defaultdict(list)
+    for code in codes:
+        text_around_code = re.findall(r'(\s*{}.*?\s*)'.format(code), text)
+        if text_around_code:
+            code_text[code].append(text_around_code[0].strip())
+    return sorted(set(codes)), code_text
 
 def preprocess_text(text):
     text = text.lower()
@@ -78,6 +85,27 @@ def encode_text(text):
 
 def cosine_similarity(embedding1, embedding2):
     return F.cosine_similarity(embedding1, embedding2).item()
+
+def compare_codes(code_text1, code_text2):
+    results = []
+    for code in set(code_text1.keys()) | set(code_text2.keys()):
+        text1 = code_text1.get(code, "")
+        text2 = code_text2.get(code, "")
+
+        similarity = fuzz.ratio(text1, text2)
+
+        diff = len(text1) - len(text2)
+        if abs(diff) > 50:
+            diff = "Más de 50 caracteres"
+
+        results.append({
+            "Código": code,
+            "Texto en Modelo": text1,
+            "Texto en Verificación": text2,
+            "Similitud (%)": similarity,
+            "Diferencia": diff
+        })
+    return results
 
 def generate_report(meta, counts, comparisons, text_similarity, format='txt'):
     if format == 'txt':
@@ -237,8 +265,8 @@ if uploaded_file1 and uploaded_file2:
             text2 = read_file(uploaded_file2)
 
             if text1 and text2:
-                codes1 = preprocess_and_extract_codes(text1)
-                codes2 = preprocess_and_extract_codes(text2)
+                codes1, code_text1 = preprocess_and_extract_codes(text1)
+                codes2, code_text2 = preprocess_and_extract_codes(text2)
 
                 st.subheader("Resultados")
 
@@ -246,11 +274,19 @@ if uploaded_file1 and uploaded_file2:
                     for code in codes1:
                         st.code(f"{code}", language='plain')
                         st.button("Copiar", key=code, on_click=lambda x=code: st.write(f"Copiado: {x}"))
+                        if code in code_text1:
+                            st.write(f"**Texto asociado:**")
+                            for text_snippet in code_text1[code]:
+                                st.write(f"- {text_snippet}")
 
                 with st.expander(f"Endosos únicos en Verificación ({len(codes2)})"):
                     for code in codes2:
                         st.code(f"{code}", language='plain')
                         st.button("Copiar", key=code+"ver", on_click=lambda x=code: st.write(f"Copiado: {x}"))
+                        if code in code_text2:
+                            st.write(f"**Texto asociado:**")
+                            for text_snippet in code_text2[code]:
+                                st.write(f"- {text_snippet}")
 
                 endosos_unicos_modelo = set(codes1) - set(codes2)
                 endosos_unicos_verificacion = set(codes2) - set(codes1)
@@ -261,11 +297,19 @@ if uploaded_file1 and uploaded_file2:
                     for code in endosos_unicos_modelo:
                         st.code(f"{code}", language='plain')
                         st.button("Copiar", key=code+"mod", on_click=lambda x=code: st.write(f"Copiado: {x}"))
+                        if code in code_text1:
+                            st.write(f"**Texto asociado:**")
+                            for text_snippet in code_text1[code]:
+                                st.write(f"- {text_snippet}")
 
                 with st.expander(f"En Verificación pero no en Modelo ({len(endosos_unicos_verificacion)})"):
                     for code in endosos_unicos_verificacion:
                         st.code(f"{code}", language='plain')
                         st.button("Copiar", key=code+"ver_model", on_click=lambda x=code: st.write(f"Copiado: {x}"))
+                        if code in code_text2:
+                            st.write(f"**Texto asociado:**")
+                            for text_snippet in code_text2[code]:
+                                st.write(f"- {text_snippet}")
 
                 # Filtrar endosos para la comparación de textos
                 endosos_comunes = {code for code in codes1 if code in codes2}
@@ -290,6 +334,11 @@ if uploaded_file1 and uploaded_file2:
                                 st.success('Comparación de textos completada!')
                                 st.subheader("Similitud entre los textos")
                                 st.write(f"Similitud: {similarity:.2f}")
+
+                                # Mostrar la comparación de códigos con similitud y diferencia
+                                comparison_data = compare_codes(code_text1, code_text2)
+                                df_comparison = pd.DataFrame(comparison_data)
+                                st.dataframe(df_comparison)
 
                                 if st.button("Generar Reporte"):
                                     meta = {
