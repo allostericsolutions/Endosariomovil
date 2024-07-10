@@ -230,3 +230,4 @@ def generate_report(meta, counts, comparisons, text_similarity, format='txt'):
                 st.error("No se pudo extraer texto de los documentos.")
         except Exception as e:
             st.error(f"Ocurrió un error al procesar los documentos: {str(e)}")
+
