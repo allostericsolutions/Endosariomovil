@@ -3,23 +3,26 @@ import pdfplumber
 import re
 import os
 
-# Función para extraer y segmentar el texto del PDF
+# Función para extraer y segmentar el texto del PDF con depuración
 def extract_text_from_pdf(pdf_path):
     text_segments = {}
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
+            st.write(f"Procesando página {page.page_number}")
             text = page.extract_text()
             lines = text.split('\n')
             current_code = None
             current_text = []
             for line in lines:
+                st.write(f"Procesando línea: {line}")
                 # Adaptar esta regex a cómo los códigos están formateados en tu texto
                 match = re.match(r'^[A-Z]{2}\.\d{3}\.\d{3}', line)
                 if match:
                     if current_code and current_text:
                         text_segments[current_code] = ' '.join(current_text).strip()
+                        current_text = []  # Reset current_text for next code
                     current_code = match.group(0)
-                    current_text = [line]
+                    current_text.append(line)  # Start collecting lines for the new code
                 elif current_code:
                     current_text.append(line)
             if current_code and current_text:
@@ -41,8 +44,8 @@ if uploaded_pdf:
             f.write(uploaded_pdf.read())
 
         # Extraer texto del PDF
-        pdf_text_segments = extract_text_from_pdf(pdf_path)
         st.write("Textos extraídos del PDF:")
+        pdf_text_segments = extract_text_from_pdf(pdf_path)
         st.write(pdf_text_segments)
     except Exception as e:
         st.error(f"Error al procesar el archivo PDF: {e}")
