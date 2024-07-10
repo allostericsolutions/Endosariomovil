@@ -112,6 +112,7 @@ def compare_codes(code_text1, code_text2):
 def generate_report(meta, counts, comparisons, text_similarity, format='txt'):
     # ... (same as before)
 
+# Indentation fixed here!
 st.title('Contador y Comparador de Endosos en Documentos de Seguros Médicos')
 st.write("Suba dos documentos para contar y comparar los endosos y textos.")
 
