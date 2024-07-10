@@ -76,37 +76,44 @@ if uploaded_pdf and uploaded_excel:
     # Leer el archivo Excel
     excel_df = pd.read_excel(excel_path)
 
-    # DataFrame para almacenar los resultados
-    df_comparison = pd.DataFrame(columns=['codigo', 'similarity_score'])
+    # Mostrar las columnas del DataFrame para verificación
+    st.write("Columnas encontradas en el Excel:")
+    st.write(excel_df.columns)
 
-    # Iterar sobre cada texto del Excel y comparar con el texto correspondiente del PDF
-    for index, row in excel_df.iterrows():
-        codigo = row['codigo']
-        excel_text = row['texto']
-        pdf_text = pdf_text_segments.get(codigo, "")
+    if 'codigo' not in excel_df.columns or 'texto' not in excel_df.columns:
+        st.error("El archivo Excel debe contener las columnas 'codigo' y 'texto'.")
+    else:
+        # DataFrame para almacenar los resultados
+        df_comparison = pd.DataFrame(columns=['codigo', 'similarity_score'])
 
-        if pdf_text:
-            similarity = calculate_similarity(excel_text, pdf_text, tokenizer, model)[0][0]
-            df_comparison = df_comparison.append({'codigo': codigo, 'similarity_score': similarity}, ignore_index=True)
-        else:
-            df_comparison = df_comparison.append({'codigo': codigo, 'similarity_score': 'No encontrado'}, ignore_index=True)
+        # Iterar sobre cada texto del Excel y comparar con el texto correspondiente del PDF
+        for index, row in excel_df.iterrows():
+            codigo = row['codigo']
+            excel_text = row['texto']
+            pdf_text = pdf_text_segments.get(codigo, "")
 
-    # Guardar los resultados en un archivo Excel
-    output_path = "resultado_comparacion.xlsx"
-    df_comparison.to_excel(output_path, index=False)
+            if pdf_text:
+                similarity = calculate_similarity(excel_text, pdf_text, tokenizer, model)[0][0]
+                df_comparison = df_comparison.append({'codigo': codigo, 'similarity_score': similarity}, ignore_index=True)
+            else:
+                df_comparison = df_comparison.append({'codigo': codigo, 'similarity_score': 'No encontrado'}, ignore_index=True)
 
-    # Ofrecer el archivo para descarga
-    with open(output_path, "rb") as f:
-        st.download_button(
-            label="Descargar resultado de la comparación",
-            data=f,
-            file_name="resultado_comparacion.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    
-    # Limpiar archivos temporales
-    os.remove(pdf_path)
-    os.remove(excel_path)
-    os.remove(output_path)
+        # Guardar los resultados en un archivo Excel
+        output_path = "resultado_comparacion.xlsx"
+        df_comparison.to_excel(output_path, index=False)
+
+        # Ofrecer el archivo para descarga
+        with open(output_path, "rb") as f:
+            st.download_button(
+                label="Descargar resultado de la comparación",
+                data=f,
+                file_name="resultado_comparacion.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        
+        # Limpiar archivos temporales
+        os.remove(pdf_path)
+        os.remove(excel_path)
+        os.remove(output_path)
 else:
     st.write("Por favor, sube los archivos necesarios.")
