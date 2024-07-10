@@ -72,4 +72,4 @@ for index, row in excel_df.iterrows():
 # Guardar los resultados en un archivo Excel
 df_comparison.to_excel('resultado_comparacion.xlsx', index=False)
 
-print("Comparación completada, resultados almacenados en 'resultado_comparacion.xls
+print("Comparación completada, resultados almacenados en 'resultado_comparacion.xlsx'.")
