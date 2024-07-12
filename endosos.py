@@ -5,49 +5,64 @@ import re
 
 def extract_relevant_text(pdf_path, start_code):
     text = extract_text(pdf_path)
-    match = re.search(start_code, text)
-    if match:
-        start_index = match.start()
-        relevant_text = text[start_index:]
-        # Remove footer or any unwanted trailing text after relevant content
-        relevant_text = relevant_text.split('GO-', 1)[0]
-        return relevant_text.strip()
-    return ""
+    pattern = re.compile(rf'({start_code}\s.*?)(?={start_code}|$)', re.DOTALL)
+    matches = pattern.findall(text)
+    relevant_text = []
+    for match in matches:
+        filtered_text = match.strip().split('GO-', 1)[0].strip()
+        relevant_text.append(filtered_text)
+    return relevant_text
 
-def create_pdf(output_path, content):
+def create_pdf(output_path, content_list):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
-    for line in content.split('\n'):
-        pdf.multi_cell(0, 10, line)
+    for content in content_list:
+        for line in content.split('\n'):
+            pdf.multi_cell(0, 10, line)
+        pdf.ln(10)  # Add a newline between sections
     pdf.output(output_path)
 
+# Título de la Aplicación
 st.title("PDF Text Extractor and Formatter")
 
+# Subir Archivo PDF
 uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
+
+# Ingresar Código Inicial
 start_code = st.text_input("Enter the code to start extraction from (e.g., MD.018.081)")
 
+# Botón para extraer y mostrar
 if uploaded_file and start_code:
-    if st.button("Extract and Convert"):
+    if st.button("Extract and Preview"):
         with st.spinner("Extracting and processing the PDF..."):
             input_pdf_path = "./temp_input.pdf"
-            output_pdf_path = "filtered_output.pdf"
             
-            # Save uploaded file to disk temporarily
+            # Guardar el archivo subido temporalmente
             with open(input_pdf_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
 
-            # Extract relevant text from PDF
-            extracted_text = extract_relevant_text(input_pdf_path, start_code)
+            # Extraer el contenido relevante del PDF
+            extracted_texts = extract_relevant_text(input_pdf_path, start_code)
+            
+            if extracted_texts:
+                # Mostrar el número de códigos encontrados
+                st.subheader(f"Number of codes found: {len(extracted_texts)}")
 
-            if extracted_text:
-                # Create a new PDF with the extracted text
-                create_pdf(output_pdf_path, extracted_text)
-                st.success("PDF processed successfully!")
-
-                # Provide a link to download
-                with open(output_pdf_path, "rb") as f:
-                    st.download_button('Download Processed PDF', f, file_name="filtered_output.pdf")
+                # Mostrar el contenido extraído en una tabla
+                for idx, extracted_text in enumerate(extracted_texts):
+                    st.write(f"### Section {idx + 1}")
+                    st.text_area("", value=extracted_text[:500] + '...', height=250, max_chars=500)
+                
+                # Botón para confirmar y generar PDF
+                if st.button("Confirm and Generate PDF"):
+                    output_pdf_path = "filtered_output.pdf"
+                    create_pdf(output_pdf_path, extracted_texts)
+                    st.success("PDF generated successfully!")
+                    
+                    # Proporcionar enlace de descarga
+                    with open(output_pdf_path, "rb") as f:
+                        st.download_button('Download Processed PDF', f, file_name="filtered_output.pdf")
             else:
                 st.error("No relevant text found with the provided code.")
