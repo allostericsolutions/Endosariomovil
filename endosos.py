@@ -3,38 +3,48 @@ from pdfminer.high_level import extract_text
 from fpdf import FPDF
 import re
 
+# Función para extraer texto relevante excluyendo pies de página
 def extract_relevant_text(pdf_path):
-    text = extract_text(pdf_path)
+    text = extract_text(pdf_path).replace('\n', ' ')
     
-    # Mostrar algo del texto extraído para asegurarnos de que se extrae correctamente
-    st.text_area("Extracted Text (Debug)", value=text[:2000], height=300)
-
     # Patrón para el código alfanumérico (adaptar según tus necesidades específicas)
-    pattern = re.compile(r'([A-Z]{2}\.\d{3}\.\d{3}\.)')
+    code_pattern = re.compile(r'([A-Z]{2}\.\d{3}\.\d{3}\.)')
     
-    # Encontrar el primer código y extraer el texto desde allí hasta el final
-    match = pattern.search(text)
-    if match:
+    # Encontrar todas las secciones que comienzan con el código alfanumérico
+    matches = list(code_pattern.finditer(text))
+    if not matches:
+        return "", 0
+    
+    relevant_texts = []
+    num_codes = len(matches)
+
+    for i, match in enumerate(matches):
         start_index = match.start()
-        relevant_text = text[start_index:]
-
-        # Eliminar pies de página
-        relevant_text = relevant_text.split('GO-', 1)[0]
         
-        # Buscar y contar todos los códigos
-        all_codes = pattern.findall(relevant_text)
-        num_codes = len(all_codes)
+        if i + 1 < num_codes:
+            end_index = matches[i + 1].start()
+        else:
+            end_index = len(text)
         
-        return relevant_text.strip(), num_codes
-    return "", 0
+        section_text = text[start_index:end_index]
+        
+        # Eliminar pies de página o cualquier otro contenido a eliminar
+        clean_text = section_text.split('GO-', 1)[0].strip()
+        relevant_texts.append(clean_text)
+        
+    final_text = "\n".join(relevant_texts)
+    return final_text.strip(), num_codes
 
+# Función para crear PDF con el texto extraído
 def create_pdf(output_path, content):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
+
     for line in content.split('\n'):
         pdf.multi_cell(0, 10, line)
+    
     pdf.output(output_path)
 
 # Interfaz de usuario de Streamlit
