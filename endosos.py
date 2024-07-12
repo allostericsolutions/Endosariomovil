@@ -3,86 +3,13 @@ from pdfminer.high_level import extract_text
 from fpdf import FPDF
 import re
 
-# Función para extraer texto relevante desde el primer código
-def extract_relevant_text(pdf_path):
-    text = extract_text(pdf_path)import streamlit as st
-from pdfminer.high_level import extract_text
-from fpdf import FPDF
-import re
-
-# Función para extraer texto relevante desde el primer código
 def extract_relevant_text(pdf_path):
     text = extract_text(pdf_path)
     
     # Mostrar algo del texto extraído para asegurarnos de que se extrae correctamente
     st.text_area("Extracted Text (Debug)", value=text[:2000], height=300)
 
-    # Mejor patrón para el código alfanumérico (adaptar según tus necesidades específicas)
-    pattern = re.compile(r'([A-Z]{2}\.\d{3}\.\d{3}\.)')
-    
-    match = pattern.search(text)
-    if match:
-        start_index = match.start()
-        relevant_text = text[start_index:]
-
-        # Eliminar pies de página
-        relevant_text = relevant_text.split('GO-', 1)[0]
-        
-        # Buscar y contar todos los códigos
-        all_codes = pattern.findall(relevant_text)
-        num_codes = len(all_codes)
-        
-        return relevant_text.strip(), num_codes
-    return "", 0
-
-# Función para crear PDF con el texto extraído
-def create_pdf(output_path, content):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", size=12)
-    for line in content.split('\n'):
-        pdf.multi_cell(0, 10, line)
-    pdf.output(output_path)
-
-# Interfaz Streamlit
-st.title("PDF Text Extractor and Formatter")
-
-# Subir archivo PDF
-uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
-
-# Botón para extraer y mostrar
-if uploaded_file:
-    if st.button("Extract and Preview"):
-        with st.spinner("Extracting and processing the PDF..."):
-            input_pdf_path = "./temp_input.pdf"
-            
-            # Guardar el archivo subido temporalmente
-            with open(input_pdf_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-
-            # Extraer el contenido relevante del PDF
-            extracted_text, num_codes = extract_relevant_text(input_pdf_path)
-            
-            if extracted_text:
-                # Mostrar el número de códigos encontrados
-                st.subheader(f"Number of codes found: {num_codes}")
-
-                # Mostrar el contenido extraído en una tabla
-                st.markdown("### Extracted Content Preview")
-                st.text_area("Extracted Content", value=extracted_text[:500] + '...', height=300)
-
-                # Botón para confirmar y generar PDF
-                if st.button("Confirm and Generate PDF"):
-                    output_pdf_path = "filtered_output.pdf"
-                    create_pdf(output_pdf_path, extracted_text)
-                    st.success("PDF generated successfully!")
-
-                    # Proporcionar enlace de descarga
-                    with open(output_pdf_path, "rb") as f:
-                        st.download_button('Download Processed PDF', f, file_name="filtered_output.pdf")
-            else:
-                st.error("No relevant text found.")
+    # Patrón para el código alfanumérico (adaptar según tus necesidades específicas)
     pattern = re.compile(r'([A-Z]{2}\.\d{3}\.\d{3}\.)')
     
     # Encontrar el primer código y extraer el texto desde allí hasta el final
@@ -90,7 +17,7 @@ if uploaded_file:
     if match:
         start_index = match.start()
         relevant_text = text[start_index:]
-        
+
         # Eliminar pies de página
         relevant_text = relevant_text.split('GO-', 1)[0]
         
@@ -101,7 +28,6 @@ if uploaded_file:
         return relevant_text.strip(), num_codes
     return "", 0
 
-# Función para crear PDF con el texto extraído
 def create_pdf(output_path, content):
     pdf = FPDF()
     pdf.add_page()
@@ -111,7 +37,7 @@ def create_pdf(output_path, content):
         pdf.multi_cell(0, 10, line)
     pdf.output(output_path)
 
-# Interfaz Streamlit
+# Interfaz de usuario de Streamlit
 st.title("PDF Text Extractor and Formatter")
 
 # Subir archivo PDF
@@ -149,3 +75,13 @@ if uploaded_file:
                         st.download_button('Download Processed PDF', f, file_name="filtered_output.pdf")
             else:
                 st.error("No relevant text found.")
+```
+
+### Ejecución de la Aplicación
+
+1. **Guardar el Código**:
+   - Asegúrate de guardar este código actualizado en `app.py`.
+
+2. **Ejecutar el Script de Streamlit**:
+   ```sh
+   streamlit run app.py
