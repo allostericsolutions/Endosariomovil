@@ -72,28 +72,3 @@ if uploaded_file:
                         st.download_button('Download Processed PDF', f, file_name="filtered_output.pdf")
             else:
                 st.error("No relevant text found.")
-```
-
-### Explicación del Código Ajustado
-
-1. **Función `extract_relevant_text`**:
-   - **Extracción**: Extrae todo el texto a partir del primer código alfanumérico encontrado que coincide con el patrón (`[A-Z]{2}\.\d{3}\.\d{3}\.`).
-   - **Filtrado del Pie de Página**: Excluye el pie de página que coincide con el formato 'GO-'.
-   - **Conteo de Códigos**: Busca y cuenta todas las ocurrencias del patrón de código específico en el texto extraído.
-
-2. **Función `create_pdf`**:
-   - Convierte el contenido filtrado en un nuevo PDF, asegurando que todo el texto esté bien organizado y estructurado.
-
-3. **Interfaz de Streamlit**:
-   - Permite cargar el archivo PDF.
-   - Extrae y muestra una vista previa del contenido extraído (primeros 500 caracteres) y un contador del número de códigos encontrados.
-   - Permite confirmar la generación del PDF y proporciona un enlace para descargar el PDF generado.
-
-### Ejecución de la Aplicación
-
-1. **Guardar el Código**:
-   - Guarda este código en un archivo llamado `app.py`.
-
-2. **Ejecutar el Script de Streamlit**:
-   ```sh
-   streamlit run app.py
