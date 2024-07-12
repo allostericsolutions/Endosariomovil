@@ -75,13 +75,3 @@ if uploaded_file:
                         st.download_button('Download Processed PDF', f, file_name="filtered_output.pdf")
             else:
                 st.error("No relevant text found.")
-```
-
-### Ejecución de la Aplicación
-
-1. **Guardar el Código**:
-   - Asegúrate de guardar este código actualizado en `app.py`.
-
-2. **Ejecutar el Script de Streamlit**:
-   ```sh
-   streamlit run app.py
