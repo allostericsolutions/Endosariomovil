@@ -30,7 +30,7 @@ def extract_and_clean_text(pdf_path):
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',  # Eliminar HOJA : seguido de cualquier número
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
-        r'02001\/M\d+',  # cambiar aquí: Acepta '02001/M' seguido de cualquier dígito
+        r'02001\/M\d+',
         r'CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S\.A\. DE C\.V\. CASA DE BOLSA', 
         r'GO-2-021', 
         r'\bCONDICION\s*:\s*'  # Eliminar "CONDICION :"
@@ -44,12 +44,8 @@ def extract_and_clean_text(pdf_path):
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
 
     # Agrupar y resaltar códigos alfanuméricos
-    code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'  # Formato del código (e.g., MD.018.081)
-
-    # Diccionario para almacenar texto por código
+    code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'
     text_by_code = {}
-
-    # Dividir el texto en párrafos y procesar cada uno
     paragraphs = raw_text.split('\n')
     current_code = None
 
@@ -57,7 +53,7 @@ def extract_and_clean_text(pdf_path):
         code_match = re.search(code_pattern, paragraph)
         if code_match:
             current_code = code_match.group(0)
-            paragraph = re.sub(code_pattern, '', paragraph).strip()  # Limpiar el código del párrafo
+            paragraph = re.sub(code_pattern, '', paragraph).strip()
 
             if current_code not in text_by_code:
                 text_by_code[current_code] = paragraph
@@ -78,15 +74,15 @@ class PDF(FPDF):
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, 'Pagina %s' % self.page_no(), 0, 0, 'C')
+        self.cell(0, 10, 'Página %s' % self.page_no(), 0, 0, 'C')
 
     def create_table(self, data):
-        self.set_font("Arial", size=10)
+        self.set_font("Arial", size=8)
         
         # Títulos de las columnas
         columns = ["Código", "Documento 1", "Documento 2", "Similitud (%)"]
         column_widths = [30, 70, 70, 20]
-        
+
         # Encabezado
         for i in range(len(columns)):
             self.cell(column_widths[i], 10, columns[i], 1, 0, 'C')
@@ -95,8 +91,8 @@ class PDF(FPDF):
         # Filas de datos
         for row in data:
             self.cell(column_widths[0], 10, row['Código'], 1, 0, 'C')
-            self.cell(column_widths[1], 10, row['Documento 1'], 1, 0, 'L')
-            self.cell(column_widths[2], 10, row['Documento 2'], 1, 0, 'L')
+            self.cell(column_widths[1], 10, row['Documento 1'][:70] + ('...' if len(row['Documento 1']) > 70 else ''), 1, 0, 'L')
+            self.cell(column_widths[2], 10, row['Documento 2'][:70] + ('...' if len(row['Documento 2']) > 70 else ''), 1, 0, 'L')
             self.cell(column_widths[3], 10, row['Similitud (%)'], 1, 0, 'C')
             self.ln()
 
@@ -137,7 +133,7 @@ if uploaded_file_1 and uploaded_file_2:
             similarity_str = "No está presente"
 
         row = {
-            "Código": code,  # Esto es una cadena de texto infiltrada por pandas luego
+            "Código": f'<b><span style="color:red;">{code}</span></b>',
             "Documento 1": doc1_text,
             "Documento 2": doc2_text,
             "Similitud (%)": similarity_str
@@ -147,21 +143,25 @@ if uploaded_file_1 and uploaded_file_2:
     # Convertir la lista a DataFrame
     comparison_df = pd.DataFrame(comparison_data)
 
-    # Convertir DataFrame a HTML con estilización CSS
-    table_styles = '''
-    <style>
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid black; padding: 10px; text-align: left; vertical-align: top; }
-    th { background-color: #f2f2f2; }
-    </style>
-    '''
+    # Generar HTML para la tabla con estilización adecuada
+    def generate_html_table(df):
+        html = df.to_html(index=False, escape=False)
+        html = html.replace(
+            '<table border="1" class="dataframe">',
+            '<table border="1" class="dataframe" style="width:100%; border-collapse:collapse;">'
+        ).replace(
+            '<th>',
+            '<th style="background-color:#f2f2f2; padding:10px; text-align:left;">'
+        ).replace(
+            '<td>',
+            '<td style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">'
+        )
+        return html
 
-    # Crear el HTML final
-    final_html = table_styles + comparison_df.to_html(index=False, escape=False)
-
-    # Mostrar la tabla comparativa
+    # Convertir DataFrame a HTML con estilización CSS y HTML modificado
+    table_html = generate_html_table(comparison_df)
     st.markdown("### Comparación de Documentos")
-    st.markdown(final_html, unsafe_allow_html=True)
+    st.markdown(table_html, unsafe_allow_html=True)
 
     # Botón para descargar el archivo PDF
     if st.button("Download Comparison PDF"):
