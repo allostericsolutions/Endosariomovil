@@ -50,10 +50,10 @@ patterns_to_remove = [
     r'A DEDUCIBLE Y COASEGURO APLICACION DE DEDUCIBLE Y COASEGURO A GASTOS CUBIERTOS CIRCUNCISION NO PROFILACTICA A CLAUSULAS ADICIONALES OPCIO CLAUSULA DE EMERGENCIA EN EL EXTRANJERO',
     r'A CLAUSULAS ADICIONALES OPCIO CORRECCION DE LA VISTA'
 ]
-    
+
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
-        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE) # <--- Esta línea estaba mal indentada
+        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE) 
 
 
     # Eliminar la parte en mayúsculas entre comillas
