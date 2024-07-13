@@ -6,22 +6,23 @@ import io
 import re
 import difflib
 
-# Función para preprocesar el texto
+# Función para preprocesar y normalizar el texto
 def preprocess_text(text):
     text = text.lower()  # Convertir a minúsculas
     text = re.sub(r'[^\w\s]', '', text)  # Eliminar puntuación
     return text
 
-# Función para calcular la similitud
-def similarity(text1, text2):
+# Función para calcular la similitud entre dos textos
+def calculate_similarity(text1, text2):
     # Preprocesar los textos
     text1 = preprocess_text(text1)
     text2 = preprocess_text(text2)
     
     # Usar SequenceMatcher para calcular la similitud
-    return difflib.SequenceMatcher(None, text1, text2).ratio() * 100
+    ratio = difflib.SequenceMatcher(None, text1, text2).ratio()
+    return ratio * 100
 
-# Función para extraer, limpiar, y organizar el texto del PDF
+# Función para extraer y limpiar el texto del PDF
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
@@ -68,6 +69,46 @@ def extract_and_clean_text(pdf_path):
 
     return text_by_code
 
+# Clase para generar el PDF con la tabla comparativa
+class PDF(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, 'Comparación de Documentos', 0, 1, 'C')
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, 'Pagina %s' % self.page_no(), 0, 0, 'C')
+
+    def create_table(self, data):
+        self.set_font("Arial", size=10)
+        
+        # Títulos de las columnas
+        columns = ["Código", "Documento 1", "Documento 2", "Similitud (%)"]
+        column_widths = [30, 70, 70, 20]
+        
+        # Encabezado
+        for i in range(len(columns)):
+            self.cell(column_widths[i], 10, columns[i], 1, 0, 'C')
+        self.ln()
+
+        # Filas de datos
+        for row in data:
+            self.cell(column_widths[0], 10, row['Código'], 1, 0, 'C')
+            self.cell(column_widths[1], 10, row['Documento 1'], 1, 0, 'L')
+            self.cell(column_widths[2], 10, row['Documento 2'], 1, 0, 'L')
+            self.cell(column_widths[3], 10, row['Similitud (%)'], 1, 0, 'C')
+            self.ln()
+
+def create_pdf(data):
+    pdf = PDF()
+    pdf.add_page()
+    pdf.create_table(data)
+    pdf_buffer = io.BytesIO()
+    pdf.output(pdf_buffer, 'F')
+    pdf_buffer.seek(0)
+    return pdf_buffer
+
 # Interfaz de usuario de Streamlit
 st.title("PDF Text Extractor and Comparator")
 
@@ -90,13 +131,13 @@ if uploaded_file_1 and uploaded_file_2:
 
         # Calcular la similitud si ambos documentos tienen el código
         if doc1_text != "No está presente" and doc2_text != "No está presente":
-            sim_percentage = similarity(doc1_text, doc2_text)
+            sim_percentage = calculate_similarity(doc1_text, doc2_text)
             similarity_str = f'{sim_percentage:.2f}%'
         else:
             similarity_str = "No está presente"
 
         row = {
-            "Código": f'<b><span style="color:red;">{code}</span></b>',
+            "Código": code,  # Esto es una cadena de texto infiltrada por pandas luego
             "Documento 1": doc1_text,
             "Documento 2": doc2_text,
             "Similitud (%)": similarity_str
@@ -106,28 +147,28 @@ if uploaded_file_1 and uploaded_file_2:
     # Convertir la lista a DataFrame
     comparison_df = pd.DataFrame(comparison_data)
 
-    # Convertir DataFrame a HTML con estilizacián CSS
+    # Convertir DataFrame a HTML con estilización CSS
     table_styles = '''
     <style>
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid black; padding: 10px; text-align: left; vertical-align: top; }
     th { background-color: #f2f2f2; }
-    .comparison-wrapper {
-        display: flex;
-        justify-content: space-between;
-    }
-    .comparison-wrap {
-        width: 45%;
-    }
     </style>
     '''
 
-    # Dividir el DataFrame en dos columnas y ajustar el HTML
-    full_html = comparison_df.to_html(index=False, escape=False)
-
-    # Incorporar los estilos CSS en el HTML
-    final_html = table_styles + full_html
+    # Crear el HTML final
+    final_html = table_styles + comparison_df.to_html(index=False, escape=False)
 
     # Mostrar la tabla comparativa
     st.markdown("### Comparación de Documentos")
     st.markdown(final_html, unsafe_allow_html=True)
+
+    # Botón para descargar el archivo PDF
+    if st.button("Download Comparison PDF"):
+        pdf_buffer = create_pdf(comparison_data)
+        st.download_button(
+            label="Download PDF",
+            data=pdf_buffer,
+            file_name="comparison.pdf",
+            mime="application/pdf"
+        )
