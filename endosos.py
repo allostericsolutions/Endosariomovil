@@ -33,22 +33,23 @@ def calculate_similarity(text1, text2):
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
-    # Patrones a eliminar
-patterns_to_remove = [
-    r'HOJA\s*:\s*\d+',
-    r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
-    r'02001\/M\d+',
-    r'CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S\.A\. DE C\.V\. CASA DE BOLSA', 
-    r'GO-2-021', 
-    r'\bCONDICION\s*:\s*', 
-    r'MODIFICACIONES A DEFINICIONES PERIODO DE GRACIA',  # Nueva línea
-    r'MODIFICACIONES A DEFINICIONES',  # Nueva línea
-    r'MODIFICACIONES'  # Nueva línea
-]
+# Patrones a eliminar
+    patterns_to_remove = [
+        r'HOJA\s*:\s*\d+',
+        r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
+        r'02001\/M\d+',
+        r'CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S\.A\. DE C\.V\. CASA DE BOLSA', 
+        r'GO-2-021', 
+        r'\bCONDICION\s*:\s*', 
+        r'MODIFICACIONES A DEFINICIONES PERIODO DE GRACIA',
+        r'MODIFICACIONES A DEFINICIONES',
+        r'MODIFICACIONES'
+    ]
     
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
-        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
+        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE) # <--- Esta línea estaba mal indentada
+
 
     # Eliminar la parte en mayúsculas entre comillas
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
