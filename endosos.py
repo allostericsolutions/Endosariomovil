@@ -125,7 +125,7 @@ class PDF(FPDF):
         # Títulos de las columnas
         self.set_font("Arial", 'B', 10)
         columns = ["Documento Modelo", "Valores numéricos Modelo", "Documento Verificación", "Valores numéricos Verificación", "% Similitud Texto", "% Similitud Numérica"]
-        column_widths = [45, 45, 45, 45, 30, 30]  # Ajuste los anchos según sea necesario
+        column_widths = [45, 20, 45, 20, 30, 30]  # Ajuste los anchos según sea necesario
         for i in range(len(columns)):
             self.cell(column_widths[i], 10, columns[i], 1, 0, 'C')
         self.ln()
