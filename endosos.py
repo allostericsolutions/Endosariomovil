@@ -53,7 +53,6 @@ def extract_and_clean_text(pdf_path):
         r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
         r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
         r'A\s*OTROS\s*HALLUX\s*VALGUS',
-        r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUE',
         r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*INFECCION\s*VIH\s*Y\/O\s*SIDA',
         r'A\s*GASTOS\s*CUBIERTOS\s*GASTOS\s*DEL\s*DONADOR\s*DE\s*ÓRGANOS\s*EN\s*TRASPLANTE',
         r'A\s*CLAUSULAS\s*GENERALES\s*MOVIMIENTOS\s*DE\s*ASEGURADOS\s*AUTOADMINISTRADA\s*\(INICIO\s*vs\s*RENOVACION\)',
@@ -64,7 +63,8 @@ def extract_and_clean_text(pdf_path):
         r'A\s*DEDUCIBLE\s*Y\s*COASEGURO\s*APLICACION\s*DE\s*DEDUCIBLE\s*Y\s*COASEGURO',
         r'A\s*GASTOS\s*CUBIERTOS\s*CIRCUNCISION\s*NO\s*PROFILACTICA',
         r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CLAUSULA\s*DE\s*EMERGENCIA\s*EN\s*EL\s*EXTRANJERO',
-        r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA'
+        r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA',
+        r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO'
     ]
 
     # Remover cada patrón utilizando una expresión regular
@@ -230,15 +230,19 @@ if uploaded_file_1 and uploaded_file_2:
         doc2_text = text_by_code_2.get(code, "No está presente")
         doc2_text_display = handle_long_text(doc2_text)
 
-        doc1_num, doc2_num = extract_and_align_numbers(doc1_text, doc2_text)
-        doc1_num_display = f'<details><summary>Ver más</summary>{doc1_num}</details>'
-        doc2_num_display = f'<details><summary>Ver más</summary>{doc2_num}</details>'
-
-        num_similarity_percentage = calculate_numbers_similarity(doc1_num, doc2_num)
+        # Si un texto no está presente, inicialmente el porcentaje de similitud numérica es 0
+        num_similarity_percentage = 0
         if doc1_text != "No está presente" and doc2_text != "No está presente":
+            doc1_num, doc2_num = extract_and_align_numbers(doc1_text, doc2_text)
+            doc1_num_display = f'<details><summary>Ver más</summary>{doc1_num}</details>'
+            doc2_num_display = f'<details><summary>Ver más</summary>{doc2_num}</details>'
+
+            num_similarity_percentage = calculate_numbers_similarity(doc1_num, doc2_num)
             sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
             similarity_str = f'{sim_percentage:.2f}%'
         else:
+            doc1_num_display = "No está presente"
+            doc2_num_display = "No está presente"
             similarity_str = "No está presente"
 
         row = {
@@ -255,15 +259,18 @@ if uploaded_file_1 and uploaded_file_2:
     # Convertir la lista a DataFrame
     comparison_df = pd.DataFrame(comparison_data)
 
-    # Generar HTML para la tabla con estilización adecuada
+    # Generar HTML para la tabla con títulos de columnas fijos y estilización adecuada
     def generate_html_table(df):
         html = df.to_html(index=False, escape=False)
         html = html.replace(
             '<table border="1" class="dataframe">',
             '<table border="1" class="dataframe" style="width:100%; border-collapse:collapse;">'
         ).replace(
+            '<thead>',
+            '<thead style="position: sticky; top: 0; z-index: 1; background: #fff;">'
+        ).replace(
             '<th>',
-            '<th class="fixed-width" style="background-color:#f2f2f2; padding:10px; text-align:left;">'
+            '<th class="fixed-width" style="background-color:#f2f2f2; padding:10px; text-align:left; z-index: 1;">'
         ).replace(
             '<td>',
             '<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">'
