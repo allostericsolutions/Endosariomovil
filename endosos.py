@@ -113,10 +113,20 @@ def get_color(similarity_percentage):
     else:
         return (255, 255, 255)  # Blanco (Defecto)
 
-# Función para extraer los números del texto
-def extract_numbers(text):
-    numbers = re.findall(r'\b\d+\b', text)
-    return ' '.join(numbers) if numbers else 'N/A'
+# Función para extraer y alinear los números
+def extract_and_align_numbers(text1, text2):
+    nums1 = re.findall(r'\b\d+\b', text1)
+    nums2 = re.findall(r'\b\d+\b', text2)
+    max_length = max(len(nums1), len(nums2))
+    nums1 += [''] * (max_length - len(nums1))
+    nums2 += [''] * (max_length - len(nums2))
+    return nums1, nums2
+
+# Función para calcular la similitud numérica
+def calculate_numbers_similarity(nums1, nums2):
+    matched_count = sum(1 for n1, n2 in zip(nums1, nums2) if n1 == n2 and n1 != '' and n2 != '')
+    total_count = len(nums1)
+    return (matched_count / total_count) * 100 if total_count > 0 else 0
 
 # Clase para generar el PDF con la tabla comparativa
 class PDF(FPDF):
@@ -133,8 +143,8 @@ class PDF(FPDF):
         self.set_font("Arial", size=8)
         
         # Títulos de las columnas
-        columns = ["Código", "Documento 1", "Num 1", "Documento 2", "Num 2", "Similitud (%)"]
-        column_widths = [30, 60, 30, 60, 30, 30]  # Ajuste los anchos según sea necesario
+        columns = ["Código", "Documento 1", "Num 1", "Documento 2", "Num 2", "Similitud de Texto (%)", "Similitud de Números (%)"]
+        column_widths = [30, 60, 30, 60, 30, 40, 40]  # Ajuste los anchos según sea necesario
 
         # Encabezado
         for i in range(len(columns)):
@@ -144,19 +154,25 @@ class PDF(FPDF):
         # Filas de datos
         for row in data:
             try:
-                similarity_percentage = float(row['Similitud (%)'].strip('%'))
+                text_similarity_percentage = float(row['Similitud de Texto (%)'].strip('%'))
+                num_similarity_percentage = float(row['Similitud de Números (%)'].strip('%'))
             except ValueError:
-                similarity_percentage = 0.0
+                text_similarity_percentage = 0.0
+                num_similarity_percentage = 0.0
 
-            color = get_color(similarity_percentage)
-            self.set_fill_color(*color)
+            text_color = get_color(text_similarity_percentage)
+            num_color = get_color(num_similarity_percentage)
             
+            self.set_fill_color(*text_color)
             self.cell(column_widths[0], 10, to_latin1(row['Código']), 1, 0, 'C', fill=True)
             self.cell(column_widths[1], 10, to_latin1(row['Documento 1'][:70] + ('...' if len(row['Documento 1']) > 70 else '')), 1, 0, 'L', fill=True)
             self.cell(column_widths[2], 10, to_latin1(row['Num 1']), 1, 0, 'C', fill=True)
             self.cell(column_widths[3], 10, to_latin1(row['Documento 2'][:70] + ('...' if len(row['Documento 2']) > 70 else '')), 1, 0, 'L', fill=True)
             self.cell(column_widths[4], 10, to_latin1(row['Num 2']), 1, 0, 'C', fill=True)
-            self.cell(column_widths[5], 10, to_latin1(row['Similitud (%)']), 1, 0, 'C', fill=True)
+            
+            self.set_fill_color(*num_color)
+            self.cell(column_widths[5], 10, to_latin1(row['Similitud de Texto (%)']), 1, 0, 'C', fill=True)
+            self.cell(column_widths[6], 10, to_latin1(row['Similitud de Números (%)']), 1, 0, 'C', fill=True)
             self.ln()
 
 def create_pdf(data):
@@ -219,15 +235,21 @@ if uploaded_file_1 and uploaded_file_2:
         doc1_text_display = handle_long_text(doc1_text)
         doc2_text = text_by_code_2.get(code, "No está presente")
         doc2_text_display = handle_long_text(doc2_text)
-        doc1_num = extract_numbers(doc1_text)
-        doc2_num = extract_numbers(doc2_text)
+
+        # Extraer y alinear los números
+        doc1_nums, doc2_nums = extract_and_align_numbers(doc1_text, doc2_text)
+        doc1_num = ' '.join(doc1_nums)
+        doc2_num = ' '.join(doc2_nums)
 
         # Calcular la similitud si ambos documentos tienen el código
         if doc1_text != "No está presente" and doc2_text != "No está presente":
-            sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
-            similarity_str = f'{sim_percentage:.2f}%'
+            text_sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
+            text_similarity_str = f'{text_sim_percentage:.2f}%'
+            num_sim_percentage = calculate_numbers_similarity(doc1_nums, doc2_nums)
+            num_similarity_str = f'{num_sim_percentage:.2f}%'
         else:
-            similarity_str = "No está presente"
+            text_similarity_str = "No está presente"
+            num_similarity_str = "No está presente"
 
         row = {
             "Código": f'<b><span style="color:red;">{code}</span></b>',
@@ -235,7 +257,8 @@ if uploaded_file_1 and uploaded_file_2:
             "Num 1": doc1_num,
             "Documento 2": to_latin1(doc2_text_display),
             "Num 2": doc2_num,
-            "Similitud (%)": similarity_str
+            "Similitud de Texto (%)": text_similarity_str,
+            "Similitud de Números (%)": num_similarity_str
         }
         comparison_data.append(row)
 
