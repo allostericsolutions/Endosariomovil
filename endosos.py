@@ -25,7 +25,7 @@ for code in all_codes:
         "Similitud (%)": similarity_str
     }
     comparison_data.append(row)
-```
+
 
 ### Código Completo Integrado
 
