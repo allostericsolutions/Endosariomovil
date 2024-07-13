@@ -13,10 +13,10 @@ def extract_and_clean_text(pdf_path):
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',  # Eliminar HOJA : seguido de cualquier número
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
-        r'02001/M0458517', 
+        r'02001\/M\d+',  # cambiar aquí: Acepta '02001/M' seguido de cualquier dígito
         r'CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S\.A\. DE C\.V\. CASA DE BOLSA', 
         r'GO-2-021', 
-        r'\bCONDICION\s*:\s*',  # Eliminar "CONDICION :"
+        r'\bCONDICION\s*:\s*'  # Eliminar "CONDICION :"
     ]
     
     # Remover cada patrón utilizando una expresión regular
@@ -76,7 +76,43 @@ if uploaded_file_1 and uploaded_file_2:
         }
         comparison_data.append(row)
 
-    # Mostrar la tabla comparativa
+    # Convertir la lista a DataFrame
     comparison_df = pd.DataFrame(comparison_data)
+    
+    # Convertir DataFrame a HTML con estilizacián CSS
+    table_styles = '''
+    <style>
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid black; padding: 10px; text-align: left; vertical-align: top; }
+    th { background-color: #f2f2f2; }
+    .comparison-wrapper {
+        display: flex;
+        justify-content: space-between;
+    }
+    .comparison-wrap {
+        width: 45%;
+    }
+    </style>
+    '''
+    
+    # Dividir el DataFrame en dos columnas y ajustar el HTML
+    left_column = comparison_df[["Código", "Documento 1"]].copy()
+    right_column = comparison_df[["Código", "Documento 2"]].copy()
+    
+    left_html = left_column.to_html(index=False, escape=False)
+    right_html = right_column.to_html(index=False, escape=False)
+    
+    comparison_html = f'''
+    <div class="comparison-wrapper">
+        <div class="comparison-wrap">{left_html}</div>
+        <div class="comparison-wrap">{right_html}</div>
+    </div>
+    '''
+    
+    # Incorporar los estilos CSS en el HTML
+    final_html = table_styles + comparison_html
+    
+    # Mostrar la tabla comparativa
     st.markdown("### Comparación de Documentos")
-    st.write(comparison_df.to_html(escape=False), unsafe_allow_html=True)
+    st.write(final_html, unsafe_allow_html=True)
+```
