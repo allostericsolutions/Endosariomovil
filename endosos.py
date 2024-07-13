@@ -2,23 +2,28 @@ import streamlit as st
 from pdfminer.high_level import extract_text
 from fpdf import FPDF
 import pandas as pd
-import csv
 import io
 
-# Función para extraer texto y omitir las líneas específicas
-def extract_clean_text(pdf_path):
-    text = extract_text(pdf_path)
-    lines = text.split('\n')
-    filtered_lines = []
+# Función para extraer y limpiar el texto PDF
+def extract_and_clean_text(pdf_path):
+    raw_text = extract_text(pdf_path)
     
-    for line in lines:
-        if not (line.startswith('HOJA :') or 
-                line.startswith('G.M.M. GRUPO PROPIA MEDICALIFE') or 
-                line.startswith('02001/') or 
-                line.startswith('CONTRATANTE:')):
-            filtered_lines.append(line)
+    # Líneas a ser removidas
+    lines_to_remove = [
+        "HOJA : ", 
+        "G.M.M. GRUPO PROPIA MEDICALIFE", 
+        "02001/M0458517", 
+        "CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S.A. DE C.V. CASA DE BOLSA",
+        "GO-2-021"
+    ]
     
-    cleaned_text = '\n'.join(filtered_lines)
+    cleaned_lines = []
+    
+    for line in raw_text.split('\n'):
+        if not any(remove_line in line for remove_line in lines_to_remove):
+            cleaned_lines.append(line)
+        
+    cleaned_text = '\n'.join(cleaned_lines)
     return cleaned_text
 
 # Función para crear PDF
@@ -38,8 +43,8 @@ st.title("PDF Text Extractor and Formatter")
 uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
 
 if uploaded_file:
-    cleaned_text = extract_clean_text(uploaded_file)
-
+    cleaned_text = extract_and_clean_text(uploaded_file)
+    
     # Mostrar el texto extraído
     st.markdown("### Extracted Text Preview")
     st.text_area("Extracted Content", value=cleaned_text[:5000], height=300)
@@ -97,3 +102,38 @@ if uploaded_file:
                 file_name="extracted_text.csv",
                 mime="text/csv"
             )
+```
+
+### Explicación del Código
+
+1. **Extracción y Limpieza del Texto**:
+   - La función `extract_and_clean_text`:
+     - Utiliza `pdfminer.six` para extraer el texto del PDF.
+     - Filtra las siguientes líneas específicas:
+       - "HOJA : "
+       - "G.M.M. GRUPO PROPIA MEDICALIFE"
+       - "02001/M0458517"
+       - "CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S.A. DE C.V. CASA DE BOLSA"
+       - "GO-2-021"
+     - Combina el texto limpio en una cadena.
+
+2. **Generación de Archivos**:
+   - La función `create_pdf`:
+     - Crea un nuevo PDF a partir del texto limpio usando `FPDF`.
+
+   - Se procesan los textos limpios en formatos TXT, Excel (con `pandas`), y CSV (con `pandas`).
+
+3. **Interfaz de Streamlit**:
+   - Permite la carga de un archivo PDF.
+   - Muestra una vista previa del texto extraído y limpio.
+   - Ofrece un selector para escoger el formato de salida.
+   - Proporciona un botón para descargar el archivo en el formato seleccionado.
+
+### Ejecución de la Aplicación
+
+1. **Guardar el Código**:
+   - Guarda este código en un archivo llamado `app.py`.
+
+2. **Ejecutar el Script de Streamlit**:
+   ```sh
+   streamlit run app.py
