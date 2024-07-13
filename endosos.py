@@ -132,59 +132,6 @@ def calculate_numbers_similarity(nums1, nums2):
             matches += 1
     return (matches / len(nums1_list)) * 100 if nums1_list else 0
 
-# Clase para generar el PDF con la tabla comparativa
-class PDF(FPDF):
-    def header(self):
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, 'Comparación de Documentos', 0, 1, 'C')
-        
-        # Títulos de las columnas
-        self.set_font("Arial", 'B', 10)
-        columns = ["Código", "Documento Modelo", "Valores numéricos Modelo", "Documento Verificación", "Valores numéricos Verificación", "% Similitud Texto", "% Similitud Numérica"]
-        column_widths = [30, 60, 30, 60, 30, 30, 30]  # Ajuste los anchos según sea necesario
-        for i in range(len(columns)):
-            self.cell(column_widths[i], 10, columns[i], 1, 0, 'C')
-        self.ln()
-
-    def footer(self):
-        self.set_y(-15)
-        self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, 'Página %s' % self.page_no(), 0, 0, 'C')
-
-    def create_table(self, data):
-        self.set_font("Arial", size=8)
-        column_widths = [30, 60, 30, 60, 30, 30, 30]  # Ajuste los anchos según sea necesario
-
-        # Filas de datos
-        for row in data:
-            try:
-                similarity_percentage = float(row['Similitud Texto'].strip('%'))
-                num_similarity_percentage = float(row['Similitud Numérica'].strip('%'))
-            except ValueError:
-                similarity_percentage = 0.0
-                num_similarity_percentage = 0.0
-
-            color = get_color(similarity_percentage)
-            self.set_fill_color(*color)
-            
-            self.cell(column_widths[0], 10, to_latin1(row['Código']), 1, 0, 'C', fill=True)
-            self.cell(column_widths[1], 10, to_latin1(row['Documento Modelo'][:70] + ('...' if len(row['Documento Modelo']) > 70 else '')), 1, 0, 'L', fill=True)
-            self.cell(column_widths[2], 10, to_latin1(row['Valores numéricos Modelo']), 1, 0, 'C', fill=True)
-            self.cell(column_widths[3], 10, to_latin1(row['Documento Verificación'][:70] + ('...' if len(row['Documento Verificación']) > 70 else '')), 1, 0, 'L', fill=True)
-            self.cell(column_widths[4], 10, to_latin1(row['Valores numéricos Verificación']), 1, 0, 'C', fill=True)
-            self.cell(column_widths[5], 10, to_latin1(f'{similarity_percentage:.2f}%'), 1, 0, 'C', fill=True)
-            self.cell(column_widths[6], 10, to_latin1(f'{num_similarity_percentage:.2f}%'), 1, 0, 'C', fill=True)
-            self.ln()
-
-def create_pdf(data):
-    pdf_buffer = io.BytesIO()
-    pdf = PDF()
-    pdf.add_page()
-    pdf.create_table(data)
-    pdf.output(pdf_buffer, 'F')
-    pdf_buffer.seek(0)
-    return pdf_buffer
-
 # Función para crear archivo Excel
 def create_excel(data):
     buffer = io.BytesIO()
@@ -206,16 +153,14 @@ def create_csv(data):
 # Interfaz de usuario de Streamlit
 st.title("PDF Text Extractor and Comparator")
 
+# Mostrar la imagen al inicio de la aplicación
+image_path = 'interesse.jpg'
+image = Image.open(image_path)
+st.image(image, caption='Interesse', use_column_width=True)
+
 # Subir los dos archivos PDF
 uploaded_file_1 = st.file_uploader("Upload PDF 1", type=["pdf"], key="uploader1")
 uploaded_file_2 = st.file_uploader("Upload PDF 2", type=["pdf"], key="uploader2")
-
-# Subir una Imagen
-uploaded_image = st.file_uploader("Upload Image (interesse.jpg)", type=["jpg", "jpeg", "png", "gif"], key="uploader3")
-
-if uploaded_image is not None:
-    image = Image.open(uploaded_image)
-    st.image(image, caption='Uploaded Image', use_column_width=True)
 
 if uploaded_file_1 and uploaded_file_2:
     text_by_code_1 = extract_and_clean_text(uploaded_file_1)
@@ -291,19 +236,8 @@ if uploaded_file_1 and uploaded_file_2:
     st.markdown(table_html, unsafe_allow_html=True)
 
     # Botones para descargar los archivos
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
-        download_pdf = st.button("Download Comparison PDF")
-        if download_pdf:
-            pdf_buffer = create_pdf(comparison_data)
-            st.download_button(
-                label="Download PDF",
-                data=pdf_buffer,
-                file_name="comparison.pdf",
-                mime="application/pdf"
-            )
-
-    with col2:
         download_excel = st.button("Download Comparison Excel")
         if download_excel:
             excel_buffer = create_excel(comparison_data)
@@ -314,7 +248,7 @@ if uploaded_file_1 and uploaded_file_2:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-    with col3:
+    with col2:
         download_csv = st.button("Download Comparison CSV")
         if download_csv:
             csv_buffer = create_csv(comparison_data)
