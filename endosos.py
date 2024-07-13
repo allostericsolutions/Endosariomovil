@@ -3,27 +3,34 @@ from pdfminer.high_level import extract_text
 from fpdf import FPDF
 import pandas as pd
 import io
+import re
 
 # Función para extraer y limpiar el texto del PDF
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
-    # Líneas a ser removidas
-    lines_to_remove = [
-        "HOJA : ", 
-        "G.M.M. GRUPO PROPIA MEDICALIFE", 
-        "02001/M0458517", 
-        "CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S.A. DE C.V. CASA DE BOLSA",
-        "GO-2-021"
-        "CONDICION"
+    # Patrones a eliminar
+    patterns_to_remove = [
+        r'HOJA\s*:\s*\d+',  # Eliminar HOJA : seguido de cualquier número
+        r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
+        r'02001/M0458517', 
+        r'CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S\.A\. DE C\.V\. CASA DE BOLSA', 
+        r'GO-2-021', 
+        r'\bcódigo\b', 
+        r'\bCONDICION\b'
     ]
     
-    cleaned_lines = []
-    
-    for line in raw_text.split('\n'):
-        if not any(remove_line in line for remove_line in lines_to_remove):
-            cleaned_lines.append(line)
+    # Remover cada patrón utilizando una expresión regular
+    for pattern in patterns_to_remove:
+        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
         
+    # Dividir en líneas nuevamente por si quedaron espacios en blanco
+    cleaned_lines = []
+    for line in raw_text.split('\n'):
+        # Remover líneas totalmente vacías o con espacios en blanco
+        if line.strip():
+            cleaned_lines.append(line.strip())
+    
     cleaned_text = '\n'.join(cleaned_lines)
     return cleaned_text
 
@@ -88,7 +95,7 @@ if uploaded_file:
 
         elif format_option == "Excel":
             df = pd.DataFrame({"text": cleaned_text.split('\n')})
-            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                 df.to_excel(writer, index=False, sheet_name='Sheet1')
                 writer.save()
             buffer.seek(0)
