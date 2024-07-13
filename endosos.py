@@ -203,7 +203,7 @@ if uploaded_file_1 and uploaded_file_2:
             doc1_num, doc1_context, doc2_num, doc2_context = extract_and_align_numbers_with_context(doc1_text, doc2_text)
             doc1_num_display = f'<details><summary>{doc1_num}</summary><p>{doc1_context}</p></details>'
             doc2_num_display = f'<details><summary>{doc2_num}</summary><p>{doc2_context}</p></details>'
-
+            
             num_similarity_percentage = calculate_numbers_similarity(doc1_num, doc2_num)
             sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
             similarity_str = f'{sim_percentage:.2f}%'
@@ -215,9 +215,9 @@ if uploaded_file_1 and uploaded_file_2:
         row = {
             "Código": f'<b><span style="color:red;">{code}</span></b>',
             "Documento Modelo": to_latin1(doc1_text_display),
-            "Valores numéricos Modelo": doc1_num_display,
+            "Valores numéricos Modelo": f'<details><summary>Contexto</summary>{doc1_num_display}</details>',
             "Documento Verificación": to_latin1(doc2_text_display),
-            "Valores numéricos Verificación": doc2_num_display,
+            "Valores numéricos Verificación": f'<details><summary>Contexto</summary>{doc2_num_display}</details>',
             "Similitud Texto": similarity_str,
             "Similitud Numérica": f'{num_similarity_percentage:.2f}%'
         }
