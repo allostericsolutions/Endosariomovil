@@ -1,3 +1,37 @@
+# Método para manejar texto largo con una pestaña expandible
+def handle_long_text(text, length=70):
+    if len(text) > length:
+        return f'<details><summary>Ver más</summary>{text}</details>'
+    else:
+        return text
+
+# Crear la tabla comparativa con manejo de textos largos
+comparison_data = []
+for code in all_codes:
+    doc1_text = handle_long_text(text_by_code_1.get(code, "No está presente"))
+    doc2_text = handle_long_text(text_by_code_2.get(code, "No está presente"))
+
+    # Calcular la similitud si ambos documentos tienen el código
+    if doc1_text != "No está presente" and doc2_text != "No está presente":
+        sim_percentage = calculate_similarity(doc1_text, doc2_text)
+        similarity_str = f'{sim_percentage:.2f}%'
+    else:
+        similarity_str = "No está presente"
+
+    row = {
+        "Código": f'<b><span style="color:red;">{code}</span></b>',
+        "Documento 1": doc1_text,
+        "Documento 2": doc2_text,
+        "Similitud (%)": similarity_str
+    }
+    comparison_data.append(row)
+```
+
+### Código Completo Integrado
+
+Aquí tienes el código completo con estas modificaciones:
+
+```python
 import streamlit as st
 from pdfminer.high_level import extract_text
 from fpdf import FPDF
@@ -42,7 +76,7 @@ def extract_and_clean_text(pdf_path):
         r'GO\-2\-021', 
         r'\bCONDICION\s*:\s*', 
         r'MODIFICACIONES\s*A\s*DEFINICIONES\s*PERIODO\s*DE\s*GRACIA',
-        r'MODIFICACIONES A DEFINICIONES',
+        r'MODIFICACIONES\s*A\s*DEFINICIONES',
         r'MODIFICACIONES',
         r'A\s*CLAUSULAS\s*GENERALES\s*PAGO\s*DE\s*COMPLEMENTOS\s*ANTERIORES',
         r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
@@ -108,7 +142,7 @@ class PDF(FPDF):
         
         # Títulos de las columnas
         columns = ["Código", "Documento 1", "Documento 2", "Similitud (%)"]
-        column_widths = [30, 30, 60, 20]
+        column_widths = [40, 60, 60, 30]  # Ajuste los anchos según sea necesario
 
         # Encabezado
         for i in range(len(columns)):
@@ -146,11 +180,18 @@ if uploaded_file_1 and uploaded_file_2:
     # Obtener todos los códigos únicos
     all_codes = set(text_by_code_1.keys()).union(set(text_by_code_2.keys()))
 
-    # Crear una tabla comparativa
+    # Método para manejar texto largo con una pestaña expandible
+    def handle_long_text(text, length=70):
+        if len(text) > length:
+            return f'<details><summary>Ver más</summary>{text}</details>'
+        else:
+            return text
+
+    # Crear la tabla comparativa
     comparison_data = []
     for code in all_codes:
-        doc1_text = text_by_code_1.get(code, "No está presente")
-        doc2_text = text_by_code_2.get(code, "No está presente")
+        doc1_text = handle_long_text(text_by_code_1.get(code, "No está presente"))
+        doc2_text = handle_long_text(text_by_code_2.get(code, "No está presente"))
 
         # Calcular la similitud si ambos documentos tienen el código
         if doc1_text != "No está presente" and doc2_text != "No está presente":
@@ -178,10 +219,10 @@ if uploaded_file_1 and uploaded_file_2:
             '<table border="1" class="dataframe" style="width:100%; border-collapse:collapse;">'
         ).replace(
             '<th>',
-            '<th style="background-color:#f2f2f2; padding:10px; text-align:left;">'
+            '<th class="fixed-width" style="background-color:#f2f2f2; padding:10px; text-align:left;">'
         ).replace(
             '<td>',
-            '<td style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">'
+            '<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">'
         )
         return html
 
