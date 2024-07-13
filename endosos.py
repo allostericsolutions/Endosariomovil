@@ -102,7 +102,6 @@ if uploaded_file:
                 file_name="extracted_text.csv",
                 mime="text/csv"
             )
-```
 
 ### Pasos a seguir
 
