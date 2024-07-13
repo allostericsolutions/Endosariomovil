@@ -7,6 +7,7 @@ import re
 import difflib
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from openpyxl.utils.exceptions import IllegalCharacterError
 
 # Función para preprocesar y normalizar el texto
 def preprocess_text(text):
@@ -94,9 +95,14 @@ def extract_and_clean_text(pdf_path):
 
     return text_by_code
 
+# Función para limpiar caracteres ilegales
+def clean_text(text):
+    # Normalización adicional: reemplazar caracteres no imprimibles
+    return ''.join(filter(lambda x: x in set(chr(i) for i in range(32, 127)), text))
+
 # Función para convertir texto a "latin1" y manejar caracteres no compatibles
 def to_latin1(text):
-    return text.encode('latin1', 'replace').decode('latin1')
+    return clean_text(text).encode('latin1', 'replace').decode('latin1')
 
 # Función para determinar el color de una celda en base al porcentaje
 def get_color(similarity_percentage):
@@ -106,6 +112,11 @@ def get_color(similarity_percentage):
         return (255, 255, 0)  # Amarillo
     else:
         return (255, 255, 255)  # Blanco (Defecto)
+
+# Función para extraer los números del texto
+def extract_numbers(text):
+    numbers = re.findall(r'\b\d+\b', text)
+    return ' '.join(numbers) if numbers else 'N/A'
 
 # Clase para generar el PDF con la tabla comparativa
 class PDF(FPDF):
@@ -122,8 +133,8 @@ class PDF(FPDF):
         self.set_font("Arial", size=8)
         
         # Títulos de las columnas
-        columns = ["Código", "Documento 1", "Documento 2", "Similitud (%)"]
-        column_widths = [40, 60, 60, 30]  # Ajuste los anchos según sea necesario
+        columns = ["Código", "Documento 1", "Num 1", "Documento 2", "Num 2", "Similitud (%)"]
+        column_widths = [30, 60, 30, 60, 30, 30]  # Ajuste los anchos según sea necesario
 
         # Encabezado
         for i in range(len(columns)):
@@ -142,8 +153,10 @@ class PDF(FPDF):
             
             self.cell(column_widths[0], 10, to_latin1(row['Código']), 1, 0, 'C', fill=True)
             self.cell(column_widths[1], 10, to_latin1(row['Documento 1'][:70] + ('...' if len(row['Documento 1']) > 70 else '')), 1, 0, 'L', fill=True)
-            self.cell(column_widths[2], 10, to_latin1(row['Documento 2'][:70] + ('...' if len(row['Documento 2']) > 70 else '')), 1, 0, 'L', fill=True)
-            self.cell(column_widths[3], 10, to_latin1(row['Similitud (%)']), 1, 0, 'C', fill=True)
+            self.cell(column_widths[2], 10, to_latin1(row['Num 1']), 1, 0, 'C', fill=True)
+            self.cell(column_widths[3], 10, to_latin1(row['Documento 2'][:70] + ('...' if len(row['Documento 2']) > 70 else '')), 1, 0, 'L', fill=True)
+            self.cell(column_widths[4], 10, to_latin1(row['Num 2']), 1, 0, 'C', fill=True)
+            self.cell(column_widths[5], 10, to_latin1(row['Similitud (%)']), 1, 0, 'C', fill=True)
             self.ln()
 
 def create_pdf(data):
@@ -156,7 +169,6 @@ def create_pdf(data):
     
     # Salida al buffer
     pdf.output(pdf_buffer, 'F')
-    
     pdf_buffer.seek(0)
     return pdf_buffer
 
@@ -164,6 +176,9 @@ def create_pdf(data):
 def create_excel(data):
     buffer = io.BytesIO()
     df = pd.DataFrame(data)
+    # Limpiar caracteres ilegales de cadenas
+    for column in df.columns:
+        df[column] = df[column].apply(clean_text)
     df.to_excel(buffer, index=False, engine='openpyxl')
     buffer.seek(0)
     return buffer
@@ -200,20 +215,26 @@ if uploaded_file_1 and uploaded_file_2:
     # Crear la tabla comparativa
     comparison_data = []
     for code in all_codes:
-        doc1_text = handle_long_text(text_by_code_1.get(code, "No está presente"))
-        doc2_text = handle_long_text(text_by_code_2.get(code, "No está presente"))
+        doc1_text = text_by_code_1.get(code, "No está presente")
+        doc1_text_display = handle_long_text(doc1_text)
+        doc2_text = text_by_code_2.get(code, "No está presente")
+        doc2_text_display = handle_long_text(doc2_text)
+        doc1_num = extract_numbers(doc1_text)
+        doc2_num = extract_numbers(doc2_text)
 
         # Calcular la similitud si ambos documentos tienen el código
-        if text_by_code_1.get(code, "No está presente") != "No está presente" and text_by_code_2.get(code, "No está presente") != "No está presente":
-            sim_percentage = calculate_semantic_similarity(text_by_code_1[code], text_by_code_2[code])
+        if doc1_text != "No está presente" and doc2_text != "No está presente":
+            sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
             similarity_str = f'{sim_percentage:.2f}%'
         else:
             similarity_str = "No está presente"
 
         row = {
             "Código": f'<b><span style="color:red;">{code}</span></b>',
-            "Documento 1": to_latin1(doc1_text),
-            "Documento 2": to_latin1(doc2_text),
+            "Documento 1": to_latin1(doc1_text_display),
+            "Num 1": doc1_num,
+            "Documento 2": to_latin1(doc2_text_display),
+            "Num 2": doc2_num,
             "Similitud (%)": similarity_str
         }
         comparison_data.append(row)
