@@ -151,7 +151,7 @@ def create_csv(data):
     return buffer
 
 # Interfaz de usuario de Streamlit
-st.title("PDF Text Extractor and Comparator")
+st.title("Endosario Móvil")
 
 # Mostrar la imagen al inicio de la aplicación
 image_path = 'interesse.jpg'
@@ -159,8 +159,8 @@ image = Image.open(image_path)
 st.image(image, caption='Interesse', use_column_width=True)
 
 # Subir los dos archivos PDF
-uploaded_file_1 = st.file_uploader("Upload PDF 1", type=["pdf"], key="uploader1")
-uploaded_file_2 = st.file_uploader("Upload PDF 2", type=["pdf"], key="uploader2")
+uploaded_file_1 = st.file_uploader("Documento Modelo", type=["pdf"], key="uploader1")
+uploaded_file_2 = st.file_uploader("Documento Verificación", type=["pdf"], key="uploader2")
 
 if uploaded_file_1 and uploaded_file_2:
     text_by_code_1 = extract_and_clean_text(uploaded_file_1)
