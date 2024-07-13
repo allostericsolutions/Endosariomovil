@@ -4,7 +4,6 @@ from fpdf import FPDF
 import pandas as pd
 import io
 
-# Función para extraer y limpiar el texto PDF
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
@@ -26,7 +25,6 @@ def extract_and_clean_text(pdf_path):
     cleaned_text = '\n'.join(cleaned_lines)
     return cleaned_text
 
-# Función para crear PDF
 def create_pdf(output_path, content):
     pdf = FPDF()
     pdf.add_page()
@@ -104,35 +102,29 @@ if uploaded_file:
             )
 ```
 
-### Explicación del Código
+### Detalles Adicionales
 
-1. **Extracción y Limpieza del Texto**:
-   - La función `extract_and_clean_text`:
-     - Utiliza `pdfminer.six` para extraer el texto del PDF.
-     - Filtra las siguientes líneas específicas:
-       - "HOJA : "
-       - "G.M.M. GRUPO PROPIA MEDICALIFE"
-       - "02001/M0458517"
-       - "CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S.A. DE C.V. CASA DE BOLSA"
-       - "GO-2-021"
-     - Combina el texto limpio en una cadena.
+1. **Corrección de Sintaxis**:
+   - Asegúrate de no incluir comillas o caracteres inválidos fuera del código.
+   - Verifica que el archivo esté guardado correctamente sin errores de formato.
 
-2. **Generación de Archivos**:
-   - La función `create_pdf`:
-     - Crea un nuevo PDF a partir del texto limpio usando `FPDF`.
+2. **Widget para Subir Archivos**:
+   - La función `st.file_uploader` se usa para cargar el archivo PDF que deberá procesarse.
 
-   - Se procesan los textos limpios en formatos TXT, Excel (con `pandas`), y CSV (con `pandas`).
+3. **Limpieza del Texto**:
+   - La función `extract_and_clean_text` se encarga de eliminar las líneas no deseadas.
+   - Los contenidos no extraídos incluyen: "HOJA : ", "G.M.M. GRUPO PROPIA MEDICALIFE", "02001/M0458517", "CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S.A. DE C.V. CASA DE BOLSA", y "GO-2-021".
 
-3. **Interfaz de Streamlit**:
-   - Permite la carga de un archivo PDF.
-   - Muestra una vista previa del texto extraído y limpio.
-   - Ofrece un selector para escoger el formato de salida.
-   - Proporciona un botón para descargar el archivo en el formato seleccionado.
+4. **Generación de Archivos**:
+   - El contenido se guarda en los formatos especificados (PDF, TXT, Excel, CSV) utilizando las funciones correspondientes.
 
-### Ejecución de la Aplicación
+5. **Interfaz de Usuario en Streamlit**:
+   - La interfaz permite la carga del archivo PDF, muestra una vista previa del texto limpio y ofrece opciones de descarga en el formato seleccionado.
+
+### Guardado y Ejecución
 
 1. **Guardar el Código**:
-   - Guarda este código en un archivo llamado `app.py`.
+   - Guarda este código en un archivo llamado `app.py` sin caracteres fuera del bloque de código.
 
 2. **Ejecutar el Script de Streamlit**:
    ```sh
