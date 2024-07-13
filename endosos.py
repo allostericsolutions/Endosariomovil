@@ -107,11 +107,11 @@ def to_latin1(text):
 # Función para determinar el color de una celda en base al porcentaje
 def get_color(similarity_percentage):
     if similarity_percentage < 89:
-        return (255, 0, 0)  # Rojo
+        return "background-color: rgb(255, 0, 0);"  # Rojo
     elif 89 <= similarity_percentage <= 92:
-        return (255, 255, 0)  # Amarillo
+        return "background-color: rgb(255, 255, 0);"  # Amarillo
     else:
-        return (255, 255, 255)  # Blanco (Defecto)
+        return "background-color: rgb(255, 255, 255);"  # Blanco (Defecto)
 
 # Función para extraer y alinear los números y su contexto
 def extract_and_align_numbers_with_context(text1, text2, context_size=30):
@@ -188,7 +188,7 @@ if uploaded_file_1 and uploaded_file_2:
             return f'<details><summary>Endoso</summary>{text}</details>'
         else:
             return text
-    
+
     # Crear la tabla comparativa
     comparison_data = []
     for code in all_codes:
@@ -219,7 +219,8 @@ if uploaded_file_1 and uploaded_file_2:
             "Documento Verificación": to_latin1(doc2_text_display),
             "Valores numéricos Verificación": f'<details><summary>Contexto</summary>{doc2_num_display}</details>',
             "Similitud Texto": similarity_str,
-            "Similitud Numérica": f'{num_similarity_percentage:.2f}%'
+            "Similitud Numérica": f'{num_similarity_percentage:.2f}%',
+            "Color": get_color(sim_percentage)
         }
         comparison_data.append(row)
 
@@ -242,10 +243,16 @@ if uploaded_file_1 and uploaded_file_2:
             '<td>',
             '<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">'
         )
+        
+        # Aplicar los estilos de color a las celdas
+        for index, row in df.iterrows():
+            color = row["Color"]
+            html = html.replace(f'<tr><td>{row["Código"]}</td>', f'<tr style="{color}"><td>{row["Código"]}</td>')
+        
         return html
 
     # Convertir DataFrame a HTML con estilización CSS y HTML modificado
-    table_html = generate_html_table(comparison_df)
+    table_html = generate_html_table(comparison_df.drop(columns=["Color"]))  # Eliminar la columna Color antes de convertir a HTML
     st.markdown("### Comparación de Documentos")
     st.markdown(table_html, unsafe_allow_html=True)
 
