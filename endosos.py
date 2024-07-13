@@ -1,12 +1,4 @@
-Traceback:
-File "/home/adminuser/venv/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 589, in _run_script
-    exec(code, module.__dict__)
-File "/mount/src/endosariomovil/endosos.py", line 255, in <module>
-    table_html = generate_html_table(comparison_df.drop(columns=["Color"]))  # Eliminar la columna Color antes de convertir a HTML
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-File "/mount/src/endosariomovil/endosos.py", line 249, in generate_html_table
-    color = row["Color"]
-            ~~~^^^^^^^^^import streamlit as st
+import streamlit as st
 from pdfminer.high_level import extract_text
 from fpdf import FPDF
 import pandas as pd
