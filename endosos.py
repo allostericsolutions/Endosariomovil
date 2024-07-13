@@ -102,11 +102,3 @@ if uploaded_file:
                 file_name="extracted_text.csv",
                 mime="text/csv"
             )
-
-### Pasos a seguir
-
-1. **Guardar el Código**: Asegúrate de guardar todo el código anterior en un archivo llamado `app.py`.
-
-2. **Ejecutar el Script de Streamlit**: Abre una terminal y ejecuta el siguiente comando desde el directorio donde está guardado `app.py`:
-   ```sh
-   streamlit run app.py
