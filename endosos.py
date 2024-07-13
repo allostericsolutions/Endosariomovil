@@ -113,14 +113,28 @@ def get_color(similarity_percentage):
     else:
         return (255, 255, 255)  # Blanco (Defecto)
 
-# Función para extraer y alinear los números
-def extract_and_align_numbers(text1, text2):
-    nums1 = re.findall(r'\b\d+\b', text1)
-    nums2 = re.findall(r'\b\d+\b', text2)
-    max_length = max(len(nums1), len(nums2))
-    nums1 += [''] * (max_length - len(nums1))
-    nums2 += [''] * (max_length - len(nums2))
-    return ' '.join(nums1) if nums1 else 'N/A', ' '.join(nums2) if nums2 else 'N/A'
+# Función para extraer y alinear los números y su contexto
+def extract_and_align_numbers_with_context(text1, text2, context_size=30):
+    def extract_numbers_with_context(text):
+        matches = re.finditer(r'\b\d+\b', text)
+        numbers_with_context = []
+        for match in matches:
+            start = max(0, match.start() - context_size)
+            end = min(len(text), match.end() + context_size)
+            context = text[start:end].strip()
+            numbers_with_context.append((match.group(), context))
+        return numbers_with_context
+
+    nums1_with_context = extract_numbers_with_context(text1)
+    nums2_with_context = extract_numbers_with_context(text2)
+
+    nums1 = [num for num, context in nums1_with_context] + [''] * max(0, len(nums2_with_context) - len(nums1_with_context))
+    nums2 = [num for num, context in nums2_with_context] + [''] * max(0, len(nums1_with_context) - len(nums2_with_context))
+    
+    context1 = [context for num, context in nums1_with_context] + [''] * max(0, len(nums2_with_context) - len(nums1_with_context))
+    context2 = [context for num, context in nums2_with_context] + [''] * max(0, len(nums1_with_context) - len(nums2_with_context))
+
+    return ' '.join(nums1) if nums1 else 'N/A', ' '.join(context1) if context1 else 'N/A', ' '.join(nums2) if nums2 else 'N/A', ' '.join(context2) if context2 else 'N/A'
 
 # Función para calcular la similitud de los números
 def calculate_numbers_similarity(nums1, nums2):
@@ -186,9 +200,9 @@ if uploaded_file_1 and uploaded_file_2:
         # Si un texto no está presente, inicialmente el porcentaje de similitud numérica es 0
         num_similarity_percentage = 0
         if doc1_text != "No está presente" and doc2_text != "No está presente":
-            doc1_num, doc2_num = extract_and_align_numbers(doc1_text, doc2_text)
-            doc1_num_display = f'<details><summary>Ver más</summary>{doc1_num}</details>'
-            doc2_num_display = f'<details><summary>Ver más</summary>{doc2_num}</details>'
+            doc1_num, doc1_context, doc2_num, doc2_context = extract_and_align_numbers_with_context(doc1_text, doc2_text)
+            doc1_num_display = f'<details><summary>{doc1_num}</summary><p>{doc1_context}</p></details>'
+            doc2_num_display = f'<details><summary>{doc2_num}</summary><p>{doc2_context}</p></details>'
 
             num_similarity_percentage = calculate_numbers_similarity(doc1_num, doc2_num)
             sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
