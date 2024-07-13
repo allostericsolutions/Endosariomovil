@@ -5,7 +5,7 @@ import pandas as pd
 import io
 import re
 
-# Función para extraer y limpiar el texto del PDF
+# Función para extraer, limpiar, y organizar el texto del PDF
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
@@ -50,102 +50,33 @@ def extract_and_clean_text(pdf_path):
         elif current_code:
             text_by_code[current_code] += " " + paragraph
     
-    # Generar el texto final consolidado con códigos y su texto agrupado
-    cleaned_text = ""
-    for code, text in text_by_code.items():
-        highlighted_code = f'<b><span style="color:red;">{code}</span></b>'
-        cleaned_text += f'{highlighted_code} {text.strip()}\n\n'
-    
-    return cleaned_text
-
-# Función para crear PDF
-class PDF(FPDF):
-    def write_html(self, html):
-        self.write(5, html)
-
-def create_pdf(content):
-    pdf = PDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    
-    # Reemplazar <span> de HTML por estilo directo para negrita y color en FPDF y Write
-    content = re.sub(r'<span style="color:red;">([A-Z]{2}\.\d{3}\.\d{3})</span>', r'[\1]', content)
-    content = re.sub(r'<b>(.*?)</b>', r'\1', content)
-
-    pdf.write_html(content)
-        
-    # Crear un buffer en memoria
-    pdf_buffer = io.BytesIO()
-    pdf.output(pdf_buffer, 'F')
-    pdf_buffer.seek(0)
-    return pdf_buffer
+    return text_by_code
 
 # Interfaz de usuario de Streamlit
-st.title("PDF Text Extractor and Formatter")
+st.title("PDF Text Extractor and Comparator")
 
-# Subir archivo PDF
-uploaded_file = st.file_uploader("Upload PDF", type=["pdf"], key="uploader1")
+# Subir los dos archivos PDF
+uploaded_file_1 = st.file_uploader("Upload PDF 1", type=["pdf"], key="uploader1")
+uploaded_file_2 = st.file_uploader("Upload PDF 2", type=["pdf"], key="uploader2")
 
-if uploaded_file:
-    cleaned_text = extract_and_clean_text(uploaded_file)
+if uploaded_file_1 and uploaded_file_2:
+    text_by_code_1 = extract_and_clean_text(uploaded_file_1)
+    text_by_code_2 = extract_and_clean_text(uploaded_file_2)
     
-    # Mostrar el texto extraído con HTML renderizado
-    st.markdown("### Extracted Text Preview")
-    st.markdown(cleaned_text, unsafe_allow_html=True)
+    # Obtener todos los códigos únicos
+    all_codes = set(text_by_code_1.keys()).union(set(text_by_code_2.keys()))
+    
+    # Crear una tabla comparativa
+    comparison_data = []
+    for code in all_codes:
+        row = {
+            "Código": f'<b><span style="color:red;">{code}</span></b>',
+            "Documento 1": text_by_code_1.get(code, "No está presente"),
+            "Documento 2": text_by_code_2.get(code, "No está presente"),
+        }
+        comparison_data.append(row)
 
-    # Seleccionar el formato de salida
-    format_option = st.selectbox(
-        "Select export format", 
-        ("TXT", "PDF", "Excel", "CSV")
-    )
-
-    # Botón para descargar el archivo en el formato seleccionado
-    if st.button("Download", key="download_button"):
-        buffer = io.BytesIO()
-
-        if format_option == "PDF":
-            pdf_buffer = create_pdf(cleaned_text)
-            st.download_button(
-                label="Download PDF",
-                data=pdf_buffer,
-                file_name="extracted_text.pdf",
-                mime="application/pdf",
-                key="pdf_download"
-            )
-
-        elif format_option == "TXT":
-            buffer.write(cleaned_text.encode())
-            buffer.seek(0)
-            st.download_button(
-                label="Download TXT",
-                data=buffer,
-                file_name="extracted_text.txt",
-                mime="text/plain",
-                key="txt_download"
-            )
-
-        elif format_option == "Excel":
-            df = pd.DataFrame({"text": cleaned_text.split('\n')})
-            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                df.to_excel(writer, index=False, sheet_name='Sheet1')
-                writer.close()  # Cambio de writer.save() a writer.close()
-            buffer.seek(0)
-            st.download_button(
-                label="Download Excel",
-                data=buffer,
-                file_name="extracted_text.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key="excel_download"
-            )
-
-        elif format_option == "CSV":
-            df = pd.DataFrame({"text": cleaned_text.split('\n')})
-            df.to_csv(buffer, index=False)
-            buffer.seek(0)
-            st.download_button(
-                label="Download CSV",
-                data=buffer,
-                file_name="extracted_text.csv",
-                mime="text/csv",
-                key="csv_download"
-            )
+    # Mostrar la tabla comparativa
+    comparison_df = pd.DataFrame(comparison_data)
+    st.markdown("### Comparación de Documentos")
+    st.write(comparison_df.to_html(escape=False), unsafe_allow_html=True)
