@@ -160,6 +160,22 @@ def create_pdf(data):
     pdf_buffer.seek(0)
     return pdf_buffer
 
+# Función para crear archivo Excel
+def create_excel(data):
+    buffer = io.BytesIO()
+    df = pd.DataFrame(data)
+    df.to_excel(buffer, index=False, engine='openpyxl')
+    buffer.seek(0)
+    return buffer
+
+# Función para crear archivo CSV
+def create_csv(data):
+    buffer = io.BytesIO()
+    df = pd.DataFrame(data)
+    df.to_csv(buffer, index=False)
+    buffer.seek(0)
+    return buffer
+
 # Interfaz de usuario de Streamlit
 st.title("PDF Text Extractor and Comparator")
 
@@ -225,12 +241,34 @@ if uploaded_file_1 and uploaded_file_2:
     st.markdown("### Comparación de Documentos")
     st.markdown(table_html, unsafe_allow_html=True)
 
-    # Botón para descargar el archivo PDF
-    if st.button("Download Comparison PDF"):
-        pdf_buffer = create_pdf(comparison_data)
-        st.download_button(
-            label="Download PDF",
-            data=pdf_buffer,
-            file_name="comparison.pdf",
-            mime="application/pdf"
-        )
+    # Botones para descargar los archivos
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("Download Comparison PDF"):
+            pdf_buffer = create_pdf(comparison_data)
+            st.download_button(
+                label="Download PDF",
+                data=pdf_buffer,
+                file_name="comparison.pdf",
+                mime="application/pdf"
+            )
+
+    with col2:
+        if st.button("Download Comparison Excel"):
+            excel_buffer = create_excel(comparison_data)
+            st.download_button(
+                label="Download Excel",
+                data=excel_buffer,
+                file_name="comparison.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+    with col3:
+        if st.button("Download Comparison CSV"):
+            csv_buffer = create_csv(comparison_data)
+            st.download_button(
+                label="Download CSV",
+                data=csv_buffer,
+                file_name="comparison.csv",
+                mime="text/csv"
+            )
