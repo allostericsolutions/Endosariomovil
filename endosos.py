@@ -21,7 +21,7 @@ def calculate_similarity(text1, text2):
     # Obtener la longitud del texto más corto
     min_length = min(len(text1), len(text2))
 
-    # Cortar los textos a la longitud del texto más corto
+    # Truncar los textos a la longitud del texto más corto
     text1 = text1[:min_length]
     text2 = text2[:min_length]
 
