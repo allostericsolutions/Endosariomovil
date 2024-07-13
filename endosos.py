@@ -44,6 +44,7 @@ def extract_and_clean_text(pdf_path):
         r'CONTRATANTE:\s*GBM\s*GRUPO\s*BURSATIL\s*MEXICANO,\s*S\.A\. DE C\.V\. CASA DE BOLSA', 
         r'GO\-2\-021', 
         r'\bCONDICION\s*:\s*', 
+        r'A\s*OTROS\s*REGISTRO\s*DE\s*CONDICIONES\s*GENERALES',
         r'MODIFICACIONES\s*A\s*DEFINICIONES\s*PERIODO\s*DE\s*GRACIA',
         r'MODIFICACIONES\s*A\s*DEFINICIONES',
         r'MODIFICACIONES',
