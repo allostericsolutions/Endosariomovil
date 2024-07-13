@@ -185,7 +185,7 @@ if uploaded_file_1 and uploaded_file_2:
 
     def handle_long_text(text, length=70):
         if len(text) > length:
-            return f'<details><summary>Ver más</summary>{text}</details>'
+            return f'<details><summary>Endoso</summary>{text}</details>'
         else:
             return text
     
