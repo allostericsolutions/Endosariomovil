@@ -94,6 +94,10 @@ def extract_and_clean_text(pdf_path):
 
     return text_by_code
 
+# Función para convertir texto a "latin1" y manejar caracteres no compatibles
+def to_latin1(text):
+    return text.encode('latin1', 'replace').decode('latin1')
+
 # Clase para generar el PDF con la tabla comparativa
 class PDF(FPDF):
     def header(self):
@@ -119,10 +123,10 @@ class PDF(FPDF):
 
         # Filas de datos
         for row in data:
-            self.cell(column_widths[0], 10, row['Código'], 1, 0, 'C')
-            self.cell(column_widths[1], 10, row['Documento 1'][:70] + ('...' if len(row['Documento 1']) > 70 else ''), 1, 0, 'L')
-            self.cell(column_widths[2], 10, row['Documento 2'][:70] + ('...' if len(row['Documento 2']) > 70 else ''), 1, 0, 'L')
-            self.cell(column_widths[3], 10, row['Similitud (%)'], 1, 0, 'C')
+            self.cell(column_widths[0], 10, to_latin1(row['Código']), 1, 0, 'C')
+            self.cell(column_widths[1], 10, to_latin1(row['Documento 1'][:70] + ('...' if len(row['Documento 1']) > 70 else '')), 1, 0, 'L')
+            self.cell(column_widths[2], 10, to_latin1(row['Documento 2'][:70] + ('...' if len(row['Documento 2']) > 70 else '')), 1, 0, 'L')
+            self.cell(column_widths[3], 10, to_latin1(row['Similitud (%)']), 1, 0, 'C')
             self.ln()
 
 def create_pdf(data):
@@ -170,8 +174,8 @@ if uploaded_file_1 and uploaded_file_2:
 
         row = {
             "Código": f'<b><span style="color:red;">{code}</span></b>',
-            "Documento 1": doc1_text,
-            "Documento 2": doc2_text,
+            "Documento 1": to_latin1(doc1_text),
+            "Documento 2": to_latin1(doc2_text),
             "Similitud (%)": similarity_str
         }
         comparison_data.append(row)
