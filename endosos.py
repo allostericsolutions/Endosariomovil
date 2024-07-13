@@ -16,27 +16,46 @@ def extract_and_clean_text(pdf_path):
         r'02001/M0458517', 
         r'CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S\.A\. DE C\.V\. CASA DE BOLSA', 
         r'GO-2-021', 
-        r'\bCONDICION :\s*',  # Eliminar "CONDICION :"
+        r'\bCONDICION\s*:\s*',  # Eliminar "CONDICION :"
     ]
     
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
-
+        
     # Eliminar la parte en mayúsculas entre comillas
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
-        
-    # Resaltar códigos alfanuméricos (MD.XXX.XXX)
-    raw_text = re.sub(r'(MD\.\d{3}\.\d{3})', r'**<span style="color:red;">\1</span>**', raw_text)
-
-    # Dividir en líneas nuevamente por si quedaron espacios en blanco
-    cleaned_lines = []
-    for line in raw_text.split('\n'):
-        # Remover líneas completamente vacías o con espacios en blanco
-        if line.strip():
-            cleaned_lines.append(line.strip())
     
-    cleaned_text = '\n'.join(cleaned_lines)
+    # Agrupar y resaltar códigos alfanuméricos
+    code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'  # Formato del código (e.g., MD.018.081)
+
+    # Diccionario para almacenar texto por código
+    text_by_code = {}
+
+    # Dividir el texto en párrafos y procesar cada uno
+    paragraphs = raw_text.split('\n')
+    current_code = None
+    
+    for paragraph in paragraphs:
+        code_match = re.search(code_pattern, paragraph)
+        if code_match:
+            current_code = code_match.group(0)
+            paragraph = re.sub(code_pattern, '', paragraph).strip()  # Limpiar el código del párrafo
+
+            if current_code not in text_by_code:
+                text_by_code[current_code] = paragraph
+            else:
+                text_by_code[current_code] += " " + paragraph
+
+        elif current_code:
+            text_by_code[current_code] += " " + paragraph
+    
+    # Generar el texto final consolidado con códigos y su texto agrupado
+    cleaned_text = ""
+    for code, text in text_by_code.items():
+        highlighted_code = f'<b><span style="color:red;">{code}</span></b>'
+        cleaned_text += f'{highlighted_code} {text.strip()}\n\n'
+    
     return cleaned_text
 
 # Función para crear PDF
@@ -50,7 +69,7 @@ def create_pdf(content):
     pdf.set_auto_page_break(auto=True, margin=15)
     
     # Reemplazar <span> de HTML por estilo directo para negrita y color en FPDF y Write
-    content = re.sub(r'<span style="color:red;">(MD\.\d{3}\.\d{3})</span>', r'[\1]', content)
+    content = re.sub(r'<span style="color:red;">([A-Z]{2}\.\d{3}\.\d{3})</span>', r'[\1]', content)
     content = re.sub(r'<b>(.*?)</b>', r'\1', content)
 
     pdf.write_html(content)
