@@ -1,70 +1,4 @@
-import streamlit as st
-from pdfminer.high_level import extract_text
-from fpdf import FPDF
-import pandas as pd
-import io
-import re
-import difflib
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
-# Función para preprocesar y normalizar el texto
-def preprocess_text(text):
-    text = text.lower()  # Convertir a minúsculas
-    text = re.sub(r'[^\w\s.]', '', text)  # Eliminar puntuación excepto puntos
-    text = re.sub(r'\s+', ' ', text).strip()  # Reemplazar múltiples espacios por uno y quitar espacios al inicio y final
-    return text
-
-# Función para calcular la similitud semántica entre dos textos usando TF-IDF y Cosine Similarity
-def calculate_semantic_similarity(text1, text2):
-    # Preprocesar los textos
-    text1 = preprocess_text(text1)
-    text2 = preprocess_text(text2)
-
-    # Vectorizar los textos
-    vectorizer = TfidfVectorizer().fit_transform([text1, text2])
-    vectors = vectorizer.toarray()
-
-    # Calcular la similitud coseno
-    cosine_sim = cosine_similarity(vectors)
-
-    # La similitud entre los dos textos es el valor en la posición [0, 1]
-    return cosine_sim[0, 1] * 100
-
-# Función para extraer y limpiar el texto del PDF
-def extract_and_clean_text(pdf_path):
-    raw_text = extract_text(pdf_path)
-    
-    # Patrones a eliminar
-    patterns_to_remove = [
-        r'HOJA\s*:\s*\d+',
-        r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
-        r'02001\/M\d+',
-        r'CONTRATANTE:\s*GBM\s*GRUPO\s*BURSATIL\s*MEXICANO,\s*S\.A\. DE C\.V\. CASA DE BOLSA', 
-        r'GO\-2\-021', 
-        r'\bCONDICION\s*:\s*', 
-        r'MODIFICACIONES\s*A\s*DEFINICIONES\s*PERIODO\s*DE\s*GRACIA',
-        r'MODIFICACIONES\s*A\s*DEFINICIONES',
-        r'MODIFICACIONES',
-        r'A\s*CLAUSULAS\s*GENERALES\s*PAGO\s*DE\s*COMPLEMENTOS\s*ANTERIORES',
-        r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
-        r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
-        r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA',
-        r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
-        r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
-        r'A\s*OTROS\s*HALLUX\s*VALGUS',
-        r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*INFECCION\s*VIH\s*Y\/O\s*SIDA',
-        r'A\s*GASTOS\s*CUBIERTOS\s*GASTOS\s*DEL\s*DONADOR\s*DE\s*ÓRGANOS\s*EN\s*TRASPLANTE',
-        r'A\s*CLAUSULAS\s*GENERALES\s*MOVIMIENTOS\s*DE\s*ASEGURADOS\s*AUTOADMINISTRADA\s*\(INICIO\s*vs\s*RENOVACION\)',
-        r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*CONGENITOS',
-        r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*MÉDICOS\s*Y\/O\s*QUIRÚRGICOS',
-        r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*PREEXISTENTES',
-        r'A\s*GASTOS\s*CUBIERTOS\s*TRATAMIENTOS\s*DE\s*REHABILITACION',
-        r'A\s*DEDUCIBLE\s*Y\s*COASEGURO\s*APLICACION\s*DE\s*DEDUCIBLE\s*Y\s*COASEGURO',
-        r'A\s*GASTOS\s*CUBIERTOS\s*CIRCUNCISION\s*NO\s*PROFILACTICA',
-        r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CLAUSULA\s*DE\s*EMERGENCIA\s*EN\s*EL\s*EXTRANJERO',
-        r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA'
-    ]
 
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
@@ -98,6 +32,15 @@ def extract_and_clean_text(pdf_path):
 def to_latin1(text):
     return text.encode('latin1', 'replace').decode('latin1')
 
+# Función para determinar el color de una celda en base al porcentaje
+def get_color(similarity_percentage):
+    if similarity_percentage < 89:
+        return (255, 0, 0)  # Rojo
+    elif 89 <= similarity_percentage <= 92:
+        return (255, 255, 0)  # Amarillo
+    else:
+        return (255, 255, 255)  # Blanco (Defecto)
+
 # Clase para generar el PDF con la tabla comparativa
 class PDF(FPDF):
     def header(self):
@@ -118,23 +61,32 @@ class PDF(FPDF):
 
         # Encabezado
         for i in range(len(columns)):
-            self.cell(column_widths[i], 10, columns[i], 1, 0, 'C')
+            self.cell(column_widths[i], 10, to_latin1(columns[i]), 1, 0, 'C')
         self.ln()
 
         # Filas de datos
         for row in data:
-            self.cell(column_widths[0], 10, to_latin1(row['Código']), 1, 0, 'C')
-            self.cell(column_widths[1], 10, to_latin1(row['Documento 1'][:70] + ('...' if len(row['Documento 1']) > 70 else '')), 1, 0, 'L')
-            self.cell(column_widths[2], 10, to_latin1(row['Documento 2'][:70] + ('...' if len(row['Documento 2']) > 70 else '')), 1, 0, 'L')
-            self.cell(column_widths[3], 10, to_latin1(row['Similitud (%)']), 1, 0, 'C')
+            similarity_percentage = float(row['Similitud (%)'].strip('%'))
+            color = get_color(similarity_percentage)
+            self.set_fill_color(*color)
+            
+            self.cell(column_widths[0], 10, to_latin1(row['Código']), 1, 0, 'C', fill=True)
+            self.cell(column_widths[1], 10, to_latin1(row['Documento 1'][:70] + ('...' if len(row['Documento 1']) > 70 else '')), 1, 0, 'L', fill=True)
+            self.cell(column_widths[2], 10, to_latin1(row['Documento 2'][:70] + ('...' if len(row['Documento 2']) > 70 else '')), 1, 0, 'L', fill=True)
+            self.cell(column_widths[3], 10, to_latin1(row['Similitud (%)']), 1, 0, 'C', fill=True)
             self.ln()
 
 def create_pdf(data):
+    # Crear buffer para el pdf
+    pdf_buffer = io.BytesIO()
+    
     pdf = PDF()
     pdf.add_page()
     pdf.create_table(data)
-    pdf_buffer = io.BytesIO()
+    
+    # Salida al buffer
     pdf.output(pdf_buffer, 'F')
+    
     pdf_buffer.seek(0)
     return pdf_buffer
 
