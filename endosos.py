@@ -113,19 +113,14 @@ def get_color(similarity_percentage):
     else:
         return (255, 255, 255)  # Blanco (Defecto)
 
-# Función para extraer números con contexto de texto
-def extract_numbers_with_context(text):
-    matches = re.finditer(r'\b\d+(?:,\d+)?(?:\.\d+)?\b\s*%?', text)
-    return ' '.join([f"{match.group(0)} ({text[max(0, match.start()-30):min(len(text), match.end()+30)]})" for match in matches])
-
-# Función para extraer y alinear los números con contexto
-def extract_and_align_numbers_with_context(text1, text2):
-    nums1 = extract_numbers_with_context(text1)
-    nums2 = extract_numbers_with_context(text2)
-    max_length = max(len(nums1.split()), len(nums2.split()))
-    nums1_list = nums1.split() + [''] * (max_length - len(nums1.split()))
-    nums2_list = nums2.split() + [''] * (max_length - len(nums2.split()))
-    return ' '.join(nums1_list), ' '.join(nums2_list)
+# Función para extraer y alinear los números
+def extract_and_align_numbers(text1, text2):
+    nums1 = re.findall(r'\b\d+\b', text1)
+    nums2 = re.findall(r'\b\d+\b', text2)
+    max_length = max(len(nums1), len(nums2))
+    nums1 += [''] * (max_length - len(nums1))
+    nums2 += [''] * (max_length - len(nums2))
+    return ' '.join(nums1) if nums1 else 'N/A', ' '.join(nums2) if nums2 else 'N/A'
 
 # Función para calcular la similitud de los números
 def calculate_numbers_similarity(nums1, nums2):
@@ -191,7 +186,7 @@ if uploaded_file_1 and uploaded_file_2:
         # Si un texto no está presente, inicialmente el porcentaje de similitud numérica es 0
         num_similarity_percentage = 0
         if doc1_text != "No está presente" and doc2_text != "No está presente":
-            doc1_num, doc2_num = extract_and_align_numbers_with_context(doc1_text, doc2_text)
+            doc1_num, doc2_num = extract_and_align_numbers(doc1_text, doc2_text)
             doc1_num_display = f'<details><summary>Ver más</summary>{doc1_num}</details>'
             doc2_num_display = f'<details><summary>Ver más</summary>{doc2_num}</details>'
 
