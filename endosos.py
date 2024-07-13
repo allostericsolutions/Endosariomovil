@@ -88,7 +88,7 @@ class PDF(FPDF):
         
         # Títulos de las columnas
         columns = ["Código", "Documento 1", "Documento 2", "Similitud (%)"]
-        column_widths = [30, 70, 70, 20]
+        column_widths = [30, 50, 60, 20]
 
         # Encabezado
         for i in range(len(columns)):
