@@ -34,14 +34,17 @@ def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
     # Patrones a eliminar
-    patterns_to_remove = [
-        r'HOJA\s*:\s*\d+',  # Eliminar HOJA : seguido de cualquier número
-        r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
-        r'02001\/M\d+',
-        r'CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S\.A\. DE C\.V\. CASA DE BOLSA', 
-        r'GO-2-021', 
-        r'\bCONDICION\s*:\s*'  # Eliminar "CONDICION :"
-    ]
+patterns_to_remove = [
+    r'HOJA\s*:\s*\d+',
+    r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
+    r'02001\/M\d+',
+    r'CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S\.A\. DE C\.V\. CASA DE BOLSA', 
+    r'GO-2-021', 
+    r'\bCONDICION\s*:\s*', 
+    r'MODIFICACIONES A DEFINICIONES PERIODO DE GRACIA',  # Nueva línea
+    r'MODIFICACIONES A DEFINICIONES',  # Nueva línea
+    r'MODIFICACIONES'  # Nueva línea
+]
     
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
