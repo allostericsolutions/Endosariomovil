@@ -5,29 +5,31 @@ import pandas as pd
 import io
 import re
 import difflib
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Función para preprocesar y normalizar el texto
 def preprocess_text(text):
     text = text.lower()  # Convertir a minúsculas
-    text = re.sub(r'[^\w\s.,]', '', text)  # Eliminar puntuación excepto puntos y comas
+    text = re.sub(r'[^\w\s.]', '', text)  # Eliminar puntuación excepto puntos
+    text = re.sub(r'\s+', ' ', text).strip()  # Reemplazar múltiples espacios por uno y quitar espacios al inicio y final
     return text
 
-# Función para calcular la similitud entre dos textos
-def calculate_similarity(text1, text2):
+# Función para calcular la similitud semántica entre dos textos usando TF-IDF y Cosine Similarity
+def calculate_semantic_similarity(text1, text2):
     # Preprocesar los textos
     text1 = preprocess_text(text1)
     text2 = preprocess_text(text2)
 
-    # Obtener la longitud del texto más corto
-    min_length = min(len(text1), len(text2))
+    # Vectorizar los textos
+    vectorizer = TfidfVectorizer().fit_transform([text1, text2])
+    vectors = vectorizer.toarray()
 
-    # Truncar los textos a la longitud del texto más corto
-    text1 = text1[:min_length]
-    text2 = text2[:min_length]
+    # Calcular la similitud coseno
+    cosine_sim = cosine_similarity(vectors)
 
-    # Usar SequenceMatcher para calcular la similitud
-    ratio = difflib.SequenceMatcher(None, text1, text2).ratio()
-    return ratio * 100
+    # La similitud entre los dos textos es el valor en la posición [0, 1]
+    return cosine_sim[0, 1] * 100
 
 # Función para extraer y limpiar el texto del PDF
 def extract_and_clean_text(pdf_path):
@@ -160,8 +162,8 @@ if uploaded_file_1 and uploaded_file_2:
         doc2_text = handle_long_text(text_by_code_2.get(code, "No está presente"))
 
         # Calcular la similitud si ambos documentos tienen el código
-        if doc1_text != "No está presente" and doc2_text != "No está presente":
-            sim_percentage = calculate_similarity(doc1_text, doc2_text)
+        if text_by_code_1.get(code, "No está presente") != "No está presente" and text_by_code_2.get(code, "No está presente") != "No está presente":
+            sim_percentage = calculate_semantic_similarity(text_by_code_1[code], text_by_code_2[code])
             similarity_str = f'{sim_percentage:.2f}%'
         else:
             similarity_str = "No está presente"
