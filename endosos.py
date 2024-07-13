@@ -4,6 +4,7 @@ from fpdf import FPDF
 import pandas as pd
 import io
 
+# Función para extraer y limpiar el texto PDF
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
@@ -25,6 +26,7 @@ def extract_and_clean_text(pdf_path):
     cleaned_text = '\n'.join(cleaned_lines)
     return cleaned_text
 
+# Función para crear PDF
 def create_pdf(output_path, content):
     pdf = FPDF()
     pdf.add_page()
@@ -100,31 +102,12 @@ if uploaded_file:
                 file_name="extracted_text.csv",
                 mime="text/csv"
             )
+```
 
-### Detalles Adicionales
+### Pasos a seguir
 
-1. **Corrección de Sintaxis**:
-   - Asegúrate de no incluir comillas o caracteres inválidos fuera del código.
-   - Verifica que el archivo esté guardado correctamente sin errores de formato.
+1. **Guardar el Código**: Asegúrate de guardar todo el código anterior en un archivo llamado `app.py`.
 
-2. **Widget para Subir Archivos**:
-   - La función `st.file_uploader` se usa para cargar el archivo PDF que deberá procesarse.
-
-3. **Limpieza del Texto**:
-   - La función `extract_and_clean_text` se encarga de eliminar las líneas no deseadas.
-   - Los contenidos no extraídos incluyen: "HOJA : ", "G.M.M. GRUPO PROPIA MEDICALIFE", "02001/M0458517", "CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S.A. DE C.V. CASA DE BOLSA", y "GO-2-021".
-
-4. **Generación de Archivos**:
-   - El contenido se guarda en los formatos especificados (PDF, TXT, Excel, CSV) utilizando las funciones correspondientes.
-
-5. **Interfaz de Usuario en Streamlit**:
-   - La interfaz permite la carga del archivo PDF, muestra una vista previa del texto limpio y ofrece opciones de descarga en el formato seleccionado.
-
-### Guardado y Ejecución
-
-1. **Guardar el Código**:
-   - Guarda este código en un archivo llamado `app.py` sin caracteres fuera del bloque de código.
-
-2. **Ejecutar el Script de Streamlit**:
+2. **Ejecutar el Script de Streamlit**: Abre una terminal y ejecuta el siguiente comando desde el directorio donde está guardado `app.py`:
    ```sh
    streamlit run app.py
