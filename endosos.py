@@ -132,7 +132,11 @@ class PDF(FPDF):
 
         # Filas de datos
         for row in data:
-            similarity_percentage = float(row['Similitud (%)'].strip('%'))
+            try:
+                similarity_percentage = float(row['Similitud (%)'].strip('%'))
+            except ValueError:
+                similarity_percentage = 0.0
+
             color = get_color(similarity_percentage)
             self.set_fill_color(*color)
             
