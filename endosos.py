@@ -1,4 +1,4 @@
-mport streamlit as st
+import streamlit as st
 from pdfminer.high_level import extract_text
 from fpdf import FPDF
 import pandas as pd
