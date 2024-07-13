@@ -185,10 +185,10 @@ if uploaded_file_1 and uploaded_file_2:
 
     def handle_long_text(text, length=70):
         if len(text) > length:
-            return f'<details><summary>Endoso</summary>{text}</details>'
+            return f'<details><summary>Ver más</summary>{text}</details>'
         else:
             return text
-
+    
     # Crear la tabla comparativa
     comparison_data = []
     for code in all_codes:
@@ -261,25 +261,6 @@ if uploaded_file_1 and uploaded_file_2:
                 file_name="comparison.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-
-    with col2:
-        download_csv = st.button("Download Comparison CSV")
-        if download_csv:
-            csv_buffer = create_csv(comparison_data)
-            st.download_button(
-                label="Download CSV",
-                data=csv_buffer,
-                file_name="comparison.csv",
-                mime="text/csv"
-            )
-File "/home/adminuser/venv/lib/python3.11/site-packages/pandas/core/series.py", line 1121, in __getitem__
-    return self._get_value(key)
-           ^^^^^^^^^^^^^^^^^^^^
-File "/home/adminuser/venv/lib/python3.11/site-packages/pandas/core/series.py", line 1237, in _get_value
-    loc = self.index.get_loc(label)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^
-File "/home/adminuser/venv/lib/python3.11/site-packages/pandas/core/indexes/base.py", line 3812, in get_loc
-    raise KeyError(key) from err
 
     with col2:
         download_csv = st.button("Download Comparison CSV")
