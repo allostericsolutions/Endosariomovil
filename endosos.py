@@ -9,7 +9,7 @@ import difflib
 # Función para preprocesar y normalizar el texto
 def preprocess_text(text):
     text = text.lower()  # Convertir a minúsculas
-    text = re.sub(r'[^\w\s]', '', text)  # Eliminar puntuación
+    text = re.sub(r'[^\w\s.,]', '', text)  # Eliminar puntuación excepto puntos y comas
     return text
 
 # Función para calcular la similitud entre dos textos
@@ -17,7 +17,14 @@ def calculate_similarity(text1, text2):
     # Preprocesar los textos
     text1 = preprocess_text(text1)
     text2 = preprocess_text(text2)
-    
+
+    # Obtener la longitud del texto más corto
+    min_length = min(len(text1), len(text2))
+
+    # Cortar los textos a la longitud del texto más corto
+    text1 = text1[:min_length]
+    text2 = text2[:min_length]
+
     # Usar SequenceMatcher para calcular la similitud
     ratio = difflib.SequenceMatcher(None, text1, text2).ratio()
     return ratio * 100
@@ -87,6 +94,7 @@ class PDF(FPDF):
         for i in range(len(columns)):
             self.cell(column_widths[i], 10, columns[i], 1, 0, 'C')
         self.ln()
+
 
         # Filas de datos
         for row in data:
