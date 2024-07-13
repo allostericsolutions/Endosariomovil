@@ -1,37 +1,3 @@
-# Método para manejar texto largo con una pestaña expandible
-def handle_long_text(text, length=70):
-    if len(text) > length:
-        return f'<details><summary>Ver más</summary>{text}</details>'
-    else:
-        return text
-
-# Crear la tabla comparativa con manejo de textos largos
-comparison_data = []
-for code in all_codes:
-    doc1_text = handle_long_text(text_by_code_1.get(code, "No está presente"))
-    doc2_text = handle_long_text(text_by_code_2.get(code, "No está presente"))
-
-    # Calcular la similitud si ambos documentos tienen el código
-    if doc1_text != "No está presente" and doc2_text != "No está presente":
-        sim_percentage = calculate_similarity(doc1_text, doc2_text)
-        similarity_str = f'{sim_percentage:.2f}%'
-    else:
-        similarity_str = "No está presente"
-
-    row = {
-        "Código": f'<b><span style="color:red;">{code}</span></b>',
-        "Documento 1": doc1_text,
-        "Documento 2": doc2_text,
-        "Similitud (%)": similarity_str
-    }
-    comparison_data.append(row)
-
-
-### Código Completo Integrado
-
-Aquí tienes el código completo con estas modificaciones:
-
-```python
 import streamlit as st
 from pdfminer.high_level import extract_text
 from fpdf import FPDF
