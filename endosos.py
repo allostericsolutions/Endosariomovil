@@ -16,18 +16,23 @@ def extract_and_clean_text(pdf_path):
         r'02001/M0458517', 
         r'CONTRATANTE: GBM GRUPO BURSATIL MEXICANO, S\.A\. DE C\.V\. CASA DE BOLSA', 
         r'GO-2-021', 
-        r'\bcódigo\b', 
-        r'\bCONDICION\b'
+        r'\bCONDICION :\s*',  # Eliminar "CONDICION :"
     ]
     
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
+
+    # Eliminar la parte en mayúsculas entre comillas
+    raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
         
+    # Resaltar códigos alfanuméricos (MD.XXX.XXX)
+    raw_text = re.sub(r'(MD\.\d{3}\.\d{3})', r'**<span style="color:red;">\1</span>**', raw_text)
+
     # Dividir en líneas nuevamente por si quedaron espacios en blanco
     cleaned_lines = []
     for line in raw_text.split('\n'):
-        # Remover líneas totalmente vacías o con espacios en blanco
+        # Remover líneas completamente vacías o con espacios en blanco
         if line.strip():
             cleaned_lines.append(line.strip())
     
@@ -35,13 +40,20 @@ def extract_and_clean_text(pdf_path):
     return cleaned_text
 
 # Función para crear PDF
+class PDF(FPDF):
+    def write_html(self, html):
+        self.write(5, html)
+
 def create_pdf(content):
-    pdf = FPDF()
+    pdf = PDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", size=12)
-    for line in content.split('\n'):
-        pdf.multi_cell(0, 10, line)
+    
+    # Reemplazar <span> de HTML por estilo directo para negrita y color en FPDF y Write
+    content = re.sub(r'<span style="color:red;">(MD\.\d{3}\.\d{3})</span>', r'[\1]', content)
+    content = re.sub(r'<b>(.*?)</b>', r'\1', content)
+
+    pdf.write_html(content)
         
     # Crear un buffer en memoria
     pdf_buffer = io.BytesIO()
@@ -58,9 +70,9 @@ uploaded_file = st.file_uploader("Upload PDF", type=["pdf"], key="uploader1")
 if uploaded_file:
     cleaned_text = extract_and_clean_text(uploaded_file)
     
-    # Mostrar el texto extraído
+    # Mostrar el texto extraído con HTML renderizado
     st.markdown("### Extracted Text Preview")
-    st.text_area("Extracted Content", value=cleaned_text, height=400, key="preview1")
+    st.markdown(cleaned_text, unsafe_allow_html=True)
 
     # Seleccionar el formato de salida
     format_option = st.selectbox(
