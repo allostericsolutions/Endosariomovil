@@ -21,16 +21,21 @@ def calculate_semantic_similarity(text1, text2):
     # Preprocesar los textos
     text1 = preprocess_text(text1)
     text2 = preprocess_text(text2)
+
     # Vectorizar los textos
     vectorizer = TfidfVectorizer().fit_transform([text1, text2])
     vectors = vectorizer.toarray()
+
     # Calcular la similitud coseno
     cosine_sim = cosine_similarity(vectors)
+
     return cosine_sim[0, 1] * 100
 
 # Función para extraer y limpiar el texto del PDF
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
+    
+    # Patrones a eliminar
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
@@ -60,24 +65,33 @@ def extract_and_clean_text(pdf_path):
         r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CLAUSULA\s*DE\s*EMERGENCIA\s*EN\s*EL\s*EXTRANJERO',
         r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA'
     ]
+
+    # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
+
+    # Eliminar la parte en mayúsculas entre comillas
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
+
+    # Agrupar y resaltar códigos alfanuméricos
     code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'
     text_by_code = {}
     paragraphs = raw_text.split('\n')
     current_code = None
+
     for paragraph in paragraphs:
         code_match = re.search(code_pattern, paragraph)
         if code_match:
             current_code = code_match.group(0)
             paragraph = re.sub(code_pattern, '', paragraph).strip()
+
             if current_code not in text_by_code:
                 text_by_code[current_code] = paragraph
             else:
                 text_by_code[current_code] += " " + paragraph
         elif current_code:
             text_by_code[current_code] += " " + paragraph
+
     return text_by_code
 
 # Función para limpiar caracteres ilegales
@@ -124,8 +138,8 @@ class PDF(FPDF):
         
         # Títulos de las columnas
         self.set_font("Arial", 'B', 10)
-        columns = ["Documento Modelo", "Valores numéricos Modelo", "Documento Verificación", "Valores numéricos Verificación", "% Similitud Texto", "% Similitud Numérica"]
-        column_widths = [45, 20, 45, 20, 15, 30]  # Ajuste los anchos según sea necesario
+        columns = ["Código", "Documento Modelo", "Valores numéricos Modelo", "Documento Verificación", "Valores numéricos Verificación", "% Similitud Texto", "% Similitud Numérica"]
+        column_widths = [30, 60, 30, 60, 30, 30, 30]  # Ajuste los anchos según sea necesario
         for i in range(len(columns)):
             self.cell(column_widths[i], 10, columns[i], 1, 0, 'C')
         self.ln()
@@ -137,7 +151,7 @@ class PDF(FPDF):
 
     def create_table(self, data):
         self.set_font("Arial", size=8)
-        column_widths = [45, 45, 45, 45, 30, 30]  # Ajuste los anchos según sea necesario
+        column_widths = [30, 60, 30, 60, 30, 30, 30]  # Ajuste los anchos según sea necesario
 
         # Filas de datos
         for row in data:
@@ -151,12 +165,13 @@ class PDF(FPDF):
             color = get_color(similarity_percentage)
             self.set_fill_color(*color)
             
-            self.cell(column_widths[0], 10, to_latin1(row['Documento Modelo'][:70] + ('...' if len(row['Documento Modelo']) > 70 else '')), 1, 0, 'L', fill=True)
-            self.cell(column_widths[1], 10, to_latin1(row['Valores numéricos Modelo']), 1, 0, 'C', fill=True)
-            self.cell(column_widths[2], 10, to_latin1(row['Documento Verificación'][:70] + ('...' if len(row['Documento Verificación']) > 70 else '')), 1, 0, 'L', fill=True)
-            self.cell(column_widths[3], 10, to_latin1(row['Valores numéricos Verificación']), 1, 0, 'C', fill=True)
-            self.cell(column_widths[4], 10, to_latin1(f'{similarity_percentage:.2f}%'), 1, 0, 'C', fill=True)
-            self.cell(column_widths[5], 10, to_latin1(f'{num_similarity_percentage:.2f}%'), 1, 0, 'C', fill=True)
+            self.cell(column_widths[0], 10, to_latin1(row['Código']), 1, 0, 'C', fill=True)
+            self.cell(column_widths[1], 10, to_latin1(row['Documento Modelo'][:70] + ('...' if len(row['Documento Modelo']) > 70 else '')), 1, 0, 'L', fill=True)
+            self.cell(column_widths[2], 10, to_latin1(row['Valores numéricos Modelo']), 1, 0, 'C', fill=True)
+            self.cell(column_widths[3], 10, to_latin1(row['Documento Verificación'][:70] + ('...' if len(row['Documento Verificación']) > 70 else '')), 1, 0, 'L', fill=True)
+            self.cell(column_widths[4], 10, to_latin1(row['Valores numéricos Verificación']), 1, 0, 'C', fill=True)
+            self.cell(column_widths[5], 10, to_latin1(f'{similarity_percentage:.2f}%'), 1, 0, 'C', fill=True)
+            self.cell(column_widths[6], 10, to_latin1(f'{num_similarity_percentage:.2f}%'), 1, 0, 'C', fill=True)
             self.ln()
 
 def create_pdf(data):
@@ -205,7 +220,7 @@ if uploaded_file_1 and uploaded_file_2:
             return f'<details><summary>Ver más</summary>{text}</details>'
         else:
             return text
-
+    
     # Crear la tabla comparativa
     comparison_data = []
     for code in all_codes:
@@ -215,6 +230,9 @@ if uploaded_file_1 and uploaded_file_2:
         doc2_text_display = handle_long_text(doc2_text)
 
         doc1_num, doc2_num = extract_and_align_numbers(doc1_text, doc2_text)
+        doc1_num_display = f'<details><summary>Ver más</summary>{doc1_num}</details>'
+        doc2_num_display = f'<details><summary>Ver más</summary>{doc2_num}</details>'
+
         num_similarity_percentage = calculate_numbers_similarity(doc1_num, doc2_num)
         if doc1_text != "No está presente" and doc2_text != "No está presente":
             sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
@@ -223,10 +241,11 @@ if uploaded_file_1 and uploaded_file_2:
             similarity_str = "No está presente"
 
         row = {
+            "Código": f'<b><span style="color:red;">{code}</span></b>',
             "Documento Modelo": to_latin1(doc1_text_display),
-            "Valores numéricos Modelo": doc1_num,
+            "Valores numéricos Modelo": doc1_num_display,
             "Documento Verificación": to_latin1(doc2_text_display),
-            "Valores numéricos Verificación": doc2_num,
+            "Valores numéricos Verificación": doc2_num_display,
             "Similitud Texto": similarity_str,
             "Similitud Numérica": f'{num_similarity_percentage:.2f}%'
         }
