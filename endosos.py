@@ -5,6 +5,7 @@ import pandas as pd
 import io
 import re
 import difflib
+from PIL import Image  # Para trabajar con imágenes
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from openpyxl.utils.exceptions import IllegalCharacterError
@@ -208,6 +209,13 @@ st.title("PDF Text Extractor and Comparator")
 # Subir los dos archivos PDF
 uploaded_file_1 = st.file_uploader("Upload PDF 1", type=["pdf"], key="uploader1")
 uploaded_file_2 = st.file_uploader("Upload PDF 2", type=["pdf"], key="uploader2")
+
+# Subir una Imagen
+uploaded_image = st.file_uploader("Upload Image (interesse.jpg)", type=["jpg", "jpeg", "png", "gif"], key="uploader3")
+
+if uploaded_image is not None:
+    image = Image.open(uploaded_image)
+    st.image(image, caption='Uploaded Image', use_column_width=True)
 
 if uploaded_file_1 and uploaded_file_2:
     text_by_code_1 = extract_and_clean_text(uploaded_file_1)
