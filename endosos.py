@@ -97,7 +97,7 @@ if uploaded_file:
             df = pd.DataFrame({"text": cleaned_text.split('\n')})
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                 df.to_excel(writer, index=False, sheet_name='Sheet1')
-                writer.save()
+                writer.close()  # Cambio de writer.save() a writer.close()
             buffer.seek(0)
             st.download_button(
                 label="Download Excel",
