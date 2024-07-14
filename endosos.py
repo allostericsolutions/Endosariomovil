@@ -248,6 +248,16 @@ if uploaded_file_1 and uploaded_file_2:
             '<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">'
         )
 
+        # Aplica estilos a "Documento Modelo" y "Documento Verificación"
+        html = html.replace(
+            '<th>Documento Modelo</th>',
+            '<th style="font-size: 20px; font-weight: bold;">Documento Modelo</th>'
+        )
+        html = html.replace(
+            '<th>Documento Verificación</th>',
+            '<th style="font-size: 20px; font-weight: bold;">Documento Verificación</th>'
+        )
+
         # Agrega estilos CSS para las celdas de similitud numérica
         # Convierte la columna "Similitud Numérica" a float
         df["Similitud Numérica"] = df["Similitud Numérica"].str.rstrip('%').astype(float)
