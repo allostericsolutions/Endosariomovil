@@ -228,9 +228,9 @@ if uploaded_file_1 and uploaded_file_2:
             sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
             similarity_str = f'{sim_percentage:.2f}%'
         else:
-            doc1_num_display = "No está presente"
-            doc2_num_display = "No está presente"
-            similarity_str = "No está presente"
+            doc1_num_display = "Ausente"
+            doc2_num_display = "Ausente"
+            similarity_str = "Ausente"
 
         row = {
             "Código": f'<b><span style="color:red;">{code}</span></b>',
