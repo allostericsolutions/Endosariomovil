@@ -81,8 +81,8 @@ def extract_and_clean_text(pdf_path):
     paragraphs = raw_text.split('\n')
     current_code = None
     
-    # Contar códigos por documento
-    code_counts = {}
+    # Contar códigos por documento (únicos)
+    code_counts = set()  # Usar un set para contar códigos únicos
 
     for paragraph in paragraphs:
         code_match = re.search(code_pattern, paragraph)
@@ -95,14 +95,11 @@ def extract_and_clean_text(pdf_path):
             else:
                 text_by_code[current_code] += " " + paragraph
 
-            if current_code not in code_counts:
-                code_counts[current_code] = 1
-            else:
-                code_counts[current_code] += 1
+            code_counts.add(current_code)  # Agregar código al set
         elif current_code:
             text_by_code[current_code] += " " + paragraph
 
-    return text_by_code, code_counts
+    return text_by_code, len(code_counts)  # Devolver el conteo de códigos únicos
 
 # Función para limpiar caracteres ilegales
 def clean_text(text):
@@ -185,8 +182,8 @@ uploaded_file_1 = st.file_uploader("Modelo", type=["pdf"], key="uploader1")
 uploaded_file_2 = st.file_uploader("Verificación", type=["pdf"], key="uploader2")
 
 if uploaded_file_1 and uploaded_file_2:
-    text_by_code_1, code_counts_1 = extract_and_clean_text(uploaded_file_1)
-    text_by_code_2, code_counts_2 = extract_and_clean_text(uploaded_file_2)
+    text_by_code_1, unique_code_count_1 = extract_and_clean_text(uploaded_file_1)
+    text_by_code_2, unique_code_count_2 = extract_and_clean_text(uploaded_file_2)
 
     # Obtener todos los códigos únicos
     all_codes = set(text_by_code_1.keys()).union(set(text_by_code_2.keys()))
@@ -271,15 +268,15 @@ if uploaded_file_1 and uploaded_file_2:
 
     # Mostrar el conteo de códigos
     st.markdown("### Conteo de Códigos")
-    st.write(f"**Documento Modelo:** {code_counts_1}")
-    st.write(f"**Documento Verificación:** {code_counts_2}")
+    st.write(f"**Documento Modelo:** {unique_code_count_1}")
+    st.write(f"**Documento Verificación:** {unique_code_count_2}")
 
     # Botones para descargar los archivos
     col1, col2 = st.columns(2)
     with col1:
         download_excel = st.button("Download Comparison Excel")
         if download_excel:
-            excel_buffer = create_excel(comparison_df)  # Pasa comparison_df aquí
+            excel_buffer = create_excel(comparison_df) 
             st.download_button(
                 label="Descarga aquí tu Excel",
                 data=excel_buffer,
@@ -290,7 +287,7 @@ if uploaded_file_1 and uploaded_file_2:
     with col2:
         download_csv = st.button("Descarga aquí tu CSV")
         if download_csv:
-            csv_buffer = create_csv(comparison_df)  # Pasa comparison_df aquí
+            csv_buffer = create_csv(comparison_df)
             st.download_button(
                 label="Descarga aquí tu CSV",
                 data=csv_buffer,
