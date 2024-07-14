@@ -4,7 +4,6 @@ from fpdf import FPDF
 import pandas as pd
 import io
 import re
-import difflib
 from PIL import Image  # Para trabajar con imágenes
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -19,24 +18,20 @@ def preprocess_text(text):
 
 # Función para calcular la similitud semántica entre dos textos usando TF-IDF y Cosine Similarity
 def calculate_semantic_similarity(text1, text2):
-    # Preprocesar los textos
     text1 = preprocess_text(text1)
     text2 = preprocess_text(text2)
 
-    # Vectorizar los textos
     vectorizer = TfidfVectorizer().fit_transform([text1, text2])
     vectors = vectorizer.toarray()
 
-    # Calcular la similitud coseno
     cosine_sim = cosine_similarity(vectors)
 
     return cosine_sim[0, 1] * 100
 
 # Función para extraer y limpiar el texto del PDF
-def extract_and_clean_text(pdf_path):
+def extract_and_clean_text(pdf_path, progress_bar=None):
     raw_text = extract_text(pdf_path)
     
-    # Patrones a eliminar
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
@@ -55,7 +50,7 @@ def extract_and_clean_text(pdf_path):
         r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
         r'A\s*OTROS\s*HALLUX\s*VALGUS',
         r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*INFECCION\s*VIH\s*Y\/O\s*SIDA',
-        r'A\s*GASTOS\s*CUBIERTOS\s*GASTOS\s*DEL\s*DONADOR\s*DE\s*ÓRGANOS\s*EN\s*TRASPLANTE',
+        r'A\s*GASTOS\s*DEL\s*DONADOR\s*DE\s*ÓRGANOS\s*EN\s*TRASPLANTE',
         r'A\s*CLAUSULAS\s*GENERALES\s*MOVIMIENTOS\s*DE\s*ASEGURADOS\s*AUTOADMINISTRADA\s*\(INICIO\s*vs\s*RENOVACION\)',
         r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*CONGENITOS',
         r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*MÉDICOS\s*Y\/O\s*QUIRÚRGICOS',
@@ -68,14 +63,13 @@ def extract_and_clean_text(pdf_path):
         r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO'
     ]
 
-    # Remover cada patrón utilizando una expresión regular
-    for pattern in patterns_to_remove:
+    for i, pattern in enumerate(patterns_to_remove):
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
+        if progress_bar:
+            progress_bar.progress((i + 1) / len(patterns_to_remove))
 
-    # Eliminar la parte en mayúsculas entre comillas
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
 
-    # Agrupar y resaltar códigos alfanuméricos
     code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'
     text_by_code = {}
     paragraphs = raw_text.split('\n')
@@ -177,10 +171,17 @@ uploaded_file_1 = st.file_uploader("Modelo", type=["pdf"], key="uploader1")
 uploaded_file_2 = st.file_uploader("Verificación", type=["pdf"], key="uploader2")
 
 if uploaded_file_1 and uploaded_file_2:
-    text_by_code_1 = extract_and_clean_text(uploaded_file_1)
-    text_by_code_2 = extract_and_clean_text(uploaded_file_2)
+    progress_text = "Extrayendo y limpiando texto de los archivos PDF..."
+    my_bar = st.progress(0, text=progress_text)
+  
+    text_by_code_1 = extract_and_clean_text(uploaded_file_1, my_bar)
+    my_bar.progress(0.5, text=progress_text)
+  
+    text_by_code_2 = extract_and_clean_text(uploaded_file_2, my_bar)
+    my_bar.progress(1.0, text="Textos extraídos y limpiados.")
+    
+    st.success("Archivos PDF cargados y procesados exitosamente!")
 
-    # Obtener todos los códigos únicos
     all_codes = set(text_by_code_1.keys()).union(set(text_by_code_2.keys()))
 
     def handle_long_text(text, length=70):
@@ -189,15 +190,16 @@ if uploaded_file_1 and uploaded_file_2:
         else:
             return text
     
-    # Crear la tabla comparativa
     comparison_data = []
-    for code in all_codes:
+    for i, code in enumerate(all_codes):
+        progress_text = f"Comparando contenido del código {code} ({i + 1}/{len(all_codes)})..."
+        my_bar.progress(i / len(all_codes), text=progress_text)
+        
         doc1_text = text_by_code_1.get(code, "No está presente")
         doc1_text_display = handle_long_text(doc1_text)
         doc2_text = text_by_code_2.get(code, "No está presente")
         doc2_text_display = handle_long_text(doc2_text)
 
-        # Si un texto no está presente, inicialmente el porcentaje de similitud numérica es 0
         num_similarity_percentage = 0
         if doc1_text != "No está presente" and doc2_text != "No está presente":
             doc1_num, doc1_context, doc2_num, doc2_context = extract_and_align_numbers_with_context(doc1_text, doc2_text)
@@ -223,10 +225,11 @@ if uploaded_file_1 and uploaded_file_2:
         }
         comparison_data.append(row)
 
-    # Convertir la lista a DataFrame
+    my_bar.progress(1.0, text="Comparación completada.")
+    st.success("Comparación de documentos completada exitosamente!")
+
     comparison_df = pd.DataFrame(comparison_data)
 
-    # Generar HTML para la tabla con títulos de columnas fijos y estilización adecuada
     def generate_html_table(df):
         html = df.to_html(index=False, escape=False)
         html = html.replace(
@@ -244,12 +247,10 @@ if uploaded_file_1 and uploaded_file_2:
         )
         return html
 
-    # Convertir DataFrame a HTML con estilización CSS y HTML modificado
     table_html = generate_html_table(comparison_df)
     st.markdown("### Comparación de Documentos")
     st.markdown(table_html, unsafe_allow_html=True)
 
-    # Botones para descargar los archivos
     col1, col2 = st.columns(2)
     with col1:
         download_excel = st.button("Download Comparison Excel")
@@ -261,6 +262,7 @@ if uploaded_file_1 and uploaded_file_2:
                 file_name="comparison.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+            st.success("Archivo Excel generado exitosamente!")
 
     with col2:
         download_csv = st.button("Descarga aquí tu CSV")
@@ -272,3 +274,4 @@ if uploaded_file_1 and uploaded_file_2:
                 file_name="comparison.csv",
                 mime="text/csv"
             )
+            st.success("Archivo CSV generado exitosamente!")
