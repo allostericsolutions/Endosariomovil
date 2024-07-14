@@ -178,8 +178,8 @@ def create_txt(data, code_counts_1, unique_code_count_2):
     buffer.write(data.to_string(index=False, header=True).encode('utf-8'))
 
     buffer.write("\n\n## Conteo de Códigos\n\n".encode('utf-8'))
-    buffer.write(f"**Documento Modelo:** {code_counts_1}\n".encode('utf-8'))
-    buffer.write(f"**Documento Verificación:** {unique_code_count_2}\n".encode('utf-8'))
+    buffer.write(f"**Documento Modelo:** {code_counts_1} (Faltan: {len(all_codes) - code_counts_1})\n".encode('utf-8'))
+    buffer.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan: {', '.join(list(all_codes - set(text_by_code_2.keys())))})\n".encode('utf-8'))
 
     buffer.seek(0)
     return buffer
@@ -294,7 +294,7 @@ if uploaded_file_1 and uploaded_file_2:
     # Mostrar el conteo de códigos
     st.markdown("### Conteo de Códigos")
     st.write(f"**Documento Modelo:** {unique_code_count_1} (Faltan: {len(all_codes) - unique_code_count_1})")
-    st.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan: {len(all_codes) - unique_code_count_2})")
+    st.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan: {', '.join(list(all_codes - set(text_by_code_2.keys())))})")
 
     # Botones para descargar los archivos
     col1, col2, col3 = st.columns(3)  # Tres columnas para botones
