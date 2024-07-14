@@ -169,6 +169,21 @@ def create_csv(data):
     buffer.seek(0)
     return buffer
 
+# Función para crear archivo TXT
+def create_txt(data, code_counts_1, unique_code_count_2):
+    buffer = io.BytesIO()
+    buffer.write("## Comparación de Documentos\n\n".encode('utf-8'))
+
+    # Agrega la tabla de comparación
+    buffer.write(data.to_string(index=False, header=True).encode('utf-8'))
+
+    buffer.write("\n\n## Conteo de Códigos\n\n".encode('utf-8'))
+    buffer.write(f"**Documento Modelo:** {code_counts_1}\n".encode('utf-8'))
+    buffer.write(f"**Documento Verificación:** {unique_code_count_2}\n".encode('utf-8'))
+
+    buffer.seek(0)
+    return buffer
+
 # Interfaz de usuario de Streamlit
 st.title("Endosario Móvil")
 
@@ -282,25 +297,34 @@ if uploaded_file_1 and uploaded_file_2:
     st.write(f"**Documento Verificación:** {unique_code_count_2}")
 
     # Botones para descargar los archivos
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)  # Tres columnas para botones
     with col1:
         download_excel = st.button("Download Comparison Excel")
         if download_excel:
             excel_buffer = create_excel(comparison_df) 
             st.download_button(
-                label="Descarga aquí tu Excel",
+                label="Descarga Excel",
                 data=excel_buffer,
                 file_name="comparison.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-
     with col2:
-        download_csv = st.button("Descarga aquí tu CSV")
+        download_csv = st.button("Download Comparison CSV")
         if download_csv:
             csv_buffer = create_csv(comparison_df)
             st.download_button(
-                label="Descarga aquí tu CSV",
+                label="Descarga CSV",
                 data=csv_buffer,
                 file_name="comparison.csv",
                 mime="text/csv"
+            )
+    with col3:
+        download_txt = st.button("Download Comparison TXT")
+        if download_txt:
+            txt_buffer = create_txt(comparison_df, unique_code_count_1, unique_code_count_2)  # Pasa los datos necesarios
+            st.download_button(
+                label="Descarga TXT",
+                data=txt_buffer,
+                file_name="comparison.txt",
+                mime="text/plain"
             )
