@@ -106,12 +106,12 @@ def to_latin1(text):
 
 # Función para determinar el color de una celda en base al porcentaje
 def get_color(similarity_percentage):
-    if similarity_percentage < 89:
-        return (255, 0, 0)  # Rojo
-    elif 89 <= similarity_percentage <= 92:
+    if similarity_percentage > 95:
+        return (0, 255, 0)  # Verde
+    elif 90 <= similarity_percentage <= 94:
         return (255, 255, 0)  # Amarillo
     else:
-        return (255, 255, 255)  # Blanco (Defecto)
+        return (255, 0, 0)  # Rojo
 
 # Función para extraer y alinear los números y su contexto
 def extract_and_align_numbers_with_context(text1, text2, context_size=30):
