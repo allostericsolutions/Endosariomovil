@@ -172,14 +172,14 @@ def create_csv(data):
 # Función para crear archivo TXT
 def create_txt(data, code_counts_1, unique_code_count_2):
     buffer = io.BytesIO()
-    buffer.write("## Comparación de Documentos\n\n".encode('utf-8'))
+    buffer.write("## Comparación de Documentos\n\n".encode('utf-14'))
 
     # Agrega la tabla de comparación
-    buffer.write(data.to_string(index=False, header=True).encode('utf-8'))
+    buffer.write(data.to_string(index=False, header=True).encode('utf-14'))
 
     buffer.write("\n\n## Conteo de Códigos\n\n".encode('utf-8'))
-    buffer.write(f"**Documento Modelo:** {code_counts_1}\n".encode('utf-8'))
-    buffer.write(f"**Documento Verificación:** {unique_code_count_2}\n".encode('utf-8'))
+    buffer.write(f"**Documento Modelo:** {code_counts_1}\n".encode('utf-14'))
+    buffer.write(f"**Documento Verificación:** {unique_code_count_2}\n".encode('utf-14'))
 
     buffer.seek(0)
     return buffer
@@ -266,11 +266,11 @@ if uploaded_file_1 and uploaded_file_2:
         # Aplica estilos a "Documento Modelo" y "Documento Verificación"
         html = html.replace(
             '<th>Documento Modelo</th>',
-            '<th style="font-size: 20px; font-weight: bold;">Documento Modelo</th>'
+            '<th style="font-size: 25px; font-weight: bold;">Documento Modelo</th>'
         )
         html = html.replace(
             '<th>Documento Verificación</th>',
-            '<th style="font-size: 20px; font-weight: bold;">Documento Verificación</th>'
+            '<th style="font-size: 25px; font-weight: bold;">Documento Verificación</th>'
         )
 
         # Agrega estilos CSS para las celdas de similitud numérica
