@@ -80,6 +80,9 @@ def extract_and_clean_text(pdf_path):
     text_by_code = {}
     paragraphs = raw_text.split('\n')
     current_code = None
+    
+    # Contar códigos por documento
+    code_counts = {}
 
     for paragraph in paragraphs:
         code_match = re.search(code_pattern, paragraph)
@@ -91,10 +94,15 @@ def extract_and_clean_text(pdf_path):
                 text_by_code[current_code] = paragraph
             else:
                 text_by_code[current_code] += " " + paragraph
+
+            if current_code not in code_counts:
+                code_counts[current_code] = 1
+            else:
+                code_counts[current_code] += 1
         elif current_code:
             text_by_code[current_code] += " " + paragraph
 
-    return text_by_code
+    return text_by_code, code_counts
 
 # Función para limpiar caracteres ilegales
 def clean_text(text):
@@ -104,14 +112,14 @@ def clean_text(text):
 def to_latin1(text):
     return clean_text(text).encode('latin1', 'replace').decode('latin1')
 
-# Función para determinar el color de una celda en base al porcentaje
-def get_color(similarity_percentage):
-    if similarity_percentage < 89:
-        return (255, 0, 0)  # Rojo
-    elif 89 <= similarity_percentage <= 92:
-        return (255, 255, 0)  # Amarillo
+# Función para agregar asteriscos según el porcentaje
+def get_asterisks(similarity_percentage):
+    if similarity_percentage > 95:
+        return ""  # Sin asterisco para > 95%
+    elif 90 <= similarity_percentage <= 94:
+        return "*"  # Un asterisco para 90-94%
     else:
-        return (255, 255, 255)  # Blanco (Defecto)
+        return "**"  # Dos asteriscos para <= 89%
 
 # Función para extraer y alinear los números y su contexto
 def extract_and_align_numbers_with_context(text1, text2, context_size=30):
@@ -177,8 +185,8 @@ uploaded_file_1 = st.file_uploader("Modelo", type=["pdf"], key="uploader1")
 uploaded_file_2 = st.file_uploader("Verificación", type=["pdf"], key="uploader2")
 
 if uploaded_file_1 and uploaded_file_2:
-    text_by_code_1 = extract_and_clean_text(uploaded_file_1)
-    text_by_code_2 = extract_and_clean_text(uploaded_file_2)
+    text_by_code_1, code_counts_1 = extract_and_clean_text(uploaded_file_1)
+    text_by_code_2, code_counts_2 = extract_and_clean_text(uploaded_file_2)
 
     # Obtener todos los códigos únicos
     all_codes = set(text_by_code_1.keys()).union(set(text_by_code_2.keys()))
@@ -260,6 +268,11 @@ if uploaded_file_1 and uploaded_file_2:
     table_html = generate_html_table(comparison_df)
     st.markdown("### Comparación de Documentos")
     st.markdown(table_html, unsafe_allow_html=True)
+
+    # Mostrar el conteo de códigos
+    st.markdown("### Conteo de Códigos")
+    st.write(f"**Documento Modelo:** {code_counts_1}")
+    st.write(f"**Documento Verificación:** {code_counts_2}")
 
     # Botones para descargar los archivos
     col1, col2 = st.columns(2)
