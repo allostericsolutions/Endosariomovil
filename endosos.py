@@ -104,14 +104,14 @@ def clean_text(text):
 def to_latin1(text):
     return clean_text(text).encode('latin1', 'replace').decode('latin1')
 
-# Función para agregar asteriscos según el porcentaje
-def get_asterisks(similarity_percentage):
-    if similarity_percentage > 95:
-        return ""  # Sin asterisco para > 95%
-    elif 90 <= similarity_percentage <= 94:
-        return "*"  # Un asterisco para 90-94%
+# Función para determinar el color de una celda en base al porcentaje
+def get_color(similarity_percentage):
+    if similarity_percentage < 89:
+        return (255, 0, 0)  # Rojo
+    elif 89 <= similarity_percentage <= 92:
+        return (255, 255, 0)  # Amarillo
     else:
-        return "**"  # Dos asteriscos para <= 89%
+        return (255, 255, 255)  # Blanco (Defecto)
 
 # Función para extraer y alinear los números y su contexto
 def extract_and_align_numbers_with_context(text1, text2, context_size=30):
@@ -243,14 +243,15 @@ if uploaded_file_1 and uploaded_file_2:
             '<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">'
         )
 
-        # Agrega asteriscos a la columna "Similitud Numérica"
+        # Agrega estilos CSS para las celdas de similitud numérica
+        # Convierte la columna "Similitud Numérica" a float
         comparison_df["Similitud Numérica"] = comparison_df["Similitud Numérica"].str.rstrip('%').astype(float)
-        comparison_df["Similitud Numérica"] = comparison_df["Similitud Numérica"].apply(lambda x: f"{x:.2f}% {get_asterisks(x)}")
 
         for i, row in df.iterrows():
+            color = get_color(row['Similitud Numérica'])
             html = html.replace(
                 f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}%</td>',
-                f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}</td>'
+                f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top; background-color:rgb{color};">{row["Similitud Numérica"]}%</td>'
             )
 
         return html
