@@ -228,7 +228,7 @@ if uploaded_file_1 and uploaded_file_2:
 
     # Generar HTML para la tabla con títulos de columnas fijos y estilización adecuada
     def generate_html_table(df):
-        html = df.to_html(index=False, escape=False)
+        html = df.to_html(index=False, escape=False, render_links=True)  # render_links=True para estilos CSS
         html = html.replace(
             '<table border="1" class="dataframe">',
             '<table border="1" class="dataframe" style="width:100%; border-collapse:collapse;">'
@@ -242,6 +242,15 @@ if uploaded_file_1 and uploaded_file_2:
             '<td>',
             '<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">'
         )
+
+        # Agrega estilos CSS para las celdas de similitud numérica
+        for i, row in df.iterrows():
+            color = get_color(row['Similitud Numérica'])
+            html = html.replace(
+                f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}%</td>',
+                f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top; background-color:rgb{color};">{row["Similitud Numérica"]}%</td>'
+            )
+
         return html
 
     # Convertir DataFrame a HTML con estilización CSS y HTML modificado
