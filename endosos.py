@@ -212,9 +212,9 @@ if uploaded_file_1 and uploaded_file_2:
     # Crear la tabla comparativa
     comparison_data = []
     for code in all_codes:
-        doc1_text = text_by_code_1.get(code, "No está presente")
+        doc1_text = text_by_code_1.get(code, "Ausente")
         doc1_text_display = handle_long_text(doc1_text)
-        doc2_text = text_by_code_2.get(code, "No está presente")
+        doc2_text = text_by_code_2.get(code, "Ausente")
         doc2_text_display = handle_long_text(doc2_text)
 
         # Si un texto no está presente, inicialmente el porcentaje de similitud numérica es 0
