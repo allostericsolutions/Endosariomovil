@@ -4,6 +4,7 @@ from fpdf import FPDF
 import pandas as pd
 import io
 import re
+import difflib
 from PIL import Image  # Para trabajar con imágenes
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -18,12 +19,15 @@ def preprocess_text(text):
 
 # Función para calcular la similitud semántica entre dos textos usando TF-IDF y Cosine Similarity
 def calculate_semantic_similarity(text1, text2):
+    # Preprocesar los textos
     text1 = preprocess_text(text1)
     text2 = preprocess_text(text2)
 
+    # Vectorizar los textos
     vectorizer = TfidfVectorizer().fit_transform([text1, text2])
     vectors = vectorizer.toarray()
 
+    # Calcular la similitud coseno
     cosine_sim = cosine_similarity(vectors)
 
     return cosine_sim[0, 1] * 100
@@ -32,6 +36,7 @@ def calculate_semantic_similarity(text1, text2):
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
+    # Patrones a eliminar
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
@@ -50,7 +55,7 @@ def extract_and_clean_text(pdf_path):
         r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
         r'A\s*OTROS\s*HALLUX\s*VALGUS',
         r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*INFECCION\s*VIH\s*Y\/O\s*SIDA',
-        r'A\s*GASTOS\s*DE\s*DONADOR\s*DE\s*ÓRGANOS\s*EN\s*TRASPLANTE',
+        r'A\s*GASTOS\s*CUBIERTOS\s*GASTOS\s*DEL\s*DONADOR\s*DE\s*ÓRGANOS\s*EN\s*TRASPLANTE',
         r'A\s*CLAUSULAS\s*GENERALES\s*MOVIMIENTOS\s*DE\s*ASEGURADOS\s*AUTOADMINISTRADA\s*\(INICIO\s*vs\s*RENOVACION\)',
         r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*CONGENITOS',
         r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*MÉDICOS\s*Y\/O\s*QUIRÚRGICOS',
@@ -63,11 +68,14 @@ def extract_and_clean_text(pdf_path):
         r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO'
     ]
 
+    # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
 
+    # Eliminar la parte en mayúsculas entre comillas
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
 
+    # Agrupar y resaltar códigos alfanuméricos
     code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'
     text_by_code = {}
     paragraphs = raw_text.split('\n')
@@ -164,10 +172,6 @@ image_path = 'interesse.jpg'
 image = Image.open(image_path)
 st.image(image, caption='Interesse', use_column_width=True)
 
-# Integrar Chatbot usando iframe
-chatbot_url = "https://mwai.live"
-st.components.v1.iframe(chatbot_url, width=700, height=500, scrolling=True)
-
 # Subir los dos archivos PDF
 uploaded_file_1 = st.file_uploader("Modelo", type=["pdf"], key="uploader1")
 uploaded_file_2 = st.file_uploader("Verificación", type=["pdf"], key="uploader2")
@@ -193,6 +197,7 @@ if uploaded_file_1 and uploaded_file_2:
         doc2_text = text_by_code_2.get(code, "No está presente")
         doc2_text_display = handle_long_text(doc2_text)
 
+        # Si un texto no está presente, inicialmente el porcentaje de similitud numérica es 0
         num_similarity_percentage = 0
         if doc1_text != "No está presente" and doc2_text != "No está presente":
             doc1_num, doc1_context, doc2_num, doc2_context = extract_and_align_numbers_with_context(doc1_text, doc2_text)
@@ -218,8 +223,10 @@ if uploaded_file_1 and uploaded_file_2:
         }
         comparison_data.append(row)
 
+    # Convertir la lista a DataFrame
     comparison_df = pd.DataFrame(comparison_data)
 
+    # Generar HTML para la tabla con títulos de columnas fijos y estilización adecuada
     def generate_html_table(df):
         html = df.to_html(index=False, escape=False)
         html = html.replace(
@@ -237,10 +244,12 @@ if uploaded_file_1 and uploaded_file_2:
         )
         return html
 
+    # Convertir DataFrame a HTML con estilización CSS y HTML modificado
     table_html = generate_html_table(comparison_df)
     st.markdown("### Comparación de Documentos")
     st.markdown(table_html, unsafe_allow_html=True)
 
+    # Botones para descargar los archivos
     col1, col2 = st.columns(2)
     with col1:
         download_excel = st.button("Download Comparison Excel")
