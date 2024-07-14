@@ -165,7 +165,7 @@ def create_csv(data):
     return buffer
 
 # Interfaz de usuario de Streamlit
-st.title("PDF Text Extractor and Comparator")
+st.title("Endosario Móvil")
 
 # Mostrar la imagen al inicio de la aplicación
 image_path = 'interesse.jpg'
@@ -173,8 +173,8 @@ image = Image.open(image_path)
 st.image(image, caption='Interesse', use_column_width=True)
 
 # Subir los dos archivos PDF
-uploaded_file_1 = st.file_uploader("Upload PDF 1", type=["pdf"], key="uploader1")
-uploaded_file_2 = st.file_uploader("Upload PDF 2", type=["pdf"], key="uploader2")
+uploaded_file_1 = st.file_uploader("Modelo", type=["pdf"], key="uploader1")
+uploaded_file_2 = st.file_uploader("Verificación", type=["pdf"], key="uploader2")
 
 if uploaded_file_1 and uploaded_file_2:
     text_by_code_1 = extract_and_clean_text(uploaded_file_1)
@@ -185,7 +185,7 @@ if uploaded_file_1 and uploaded_file_2:
 
     def handle_long_text(text, length=70):
         if len(text) > length:
-            return f'<details><summary>Ver más</summary>{text}</details>'
+            return f'<details><summary>Endoso</summary>{text}</details>'
         else:
             return text
     
@@ -256,18 +256,18 @@ if uploaded_file_1 and uploaded_file_2:
         if download_excel:
             excel_buffer = create_excel(comparison_data)
             st.download_button(
-                label="Download Excel",
+                label="Descarga aquí tu Excel",
                 data=excel_buffer,
                 file_name="comparison.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
     with col2:
-        download_csv = st.button("Download Comparison CSV")
+        download_csv = st.button("Descarga aquí tu CSV")
         if download_csv:
             csv_buffer = create_csv(comparison_data)
             st.download_button(
-                label="Download CSV",
+                label="Descarga aquí tu CSV",
                 data=csv_buffer,
                 file_name="comparison.csv",
                 mime="text/csv"
