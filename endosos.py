@@ -253,13 +253,13 @@ if uploaded_file_1 and uploaded_file_2:
 
         # Agrega estilos CSS para las celdas de similitud numérica
         # Convierte la columna "Similitud Numérica" a float
-        comparison_df["Similitud Numérica"] = comparison_df["Similitud Numérica"].str.rstrip('%').astype(float)
+        df["Similitud Numérica"] = df["Similitud Numérica"].str.rstrip('%').astype(float)
+        df["Similitud Numérica"] = df["Similitud Numérica"].apply(lambda x: f"{x:.2f}% {get_asterisks(x)}")
 
         for i, row in df.iterrows():
-            color = get_color(row['Similitud Numérica'])
             html = html.replace(
                 f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}%</td>',
-                f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top; background-color:rgb{color};">{row["Similitud Numérica"]}%</td>'
+                f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}</td>'
             )
 
         return html
@@ -279,7 +279,7 @@ if uploaded_file_1 and uploaded_file_2:
     with col1:
         download_excel = st.button("Download Comparison Excel")
         if download_excel:
-            excel_buffer = create_excel(comparison_data)
+            excel_buffer = create_excel(comparison_df)  # Pasa comparison_df aquí
             st.download_button(
                 label="Descarga aquí tu Excel",
                 data=excel_buffer,
@@ -290,7 +290,7 @@ if uploaded_file_1 and uploaded_file_2:
     with col2:
         download_csv = st.button("Descarga aquí tu CSV")
         if download_csv:
-            csv_buffer = create_csv(comparison_data)
+            csv_buffer = create_csv(comparison_df)  # Pasa comparison_df aquí
             st.download_button(
                 label="Descarga aquí tu CSV",
                 data=csv_buffer,
