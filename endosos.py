@@ -217,20 +217,25 @@ if uploaded_file_1 and uploaded_file_2:
         doc2_text = text_by_code_2.get(code, "Ausente")
         doc2_text_display = handle_long_text(doc2_text)
 
-        # Si un texto no está presente, inicialmente el porcentaje de similitud numérica es 0
-        num_similarity_percentage = 0
-        if doc1_text != "No está presente" and doc2_text != "No está presente":
+        # Si un texto no está presente, el porcentaje de similitud textual es 0
+        if doc1_text == "Ausente" or doc2_text == "Ausente":
+            sim_percentage = 0
+            similarity_str = "0.00%"
+        else:
+            sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
+            similarity_str = f'{sim_percentage:.2f}%'
+        
+        # Si un número no está presente, el porcentaje de similitud numérica es 0
+        if doc1_text == "Ausente" or doc2_text == "Ausente":
+            num_similarity_percentage = 0
+            doc1_num_display = "Ausente"
+            doc2_num_display = "Ausente"
+        else:
             doc1_num, doc1_context, doc2_num, doc2_context = extract_and_align_numbers_with_context(doc1_text, doc2_text)
             doc1_num_display = f'<details><summary>{doc1_num}</summary><p>{doc1_context}</p></details>'
             doc2_num_display = f'<details><summary>{doc2_num}</summary><p>{doc2_context}</p></details>'
             
             num_similarity_percentage = calculate_numbers_similarity(doc1_num, doc2_num)
-            sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
-            similarity_str = f'{sim_percentage:.2f}%'
-        else:
-            doc1_num_display = "Ausente"
-            doc2_num_display = "Ausente"
-            similarity_str = "Ausente"
 
         row = {
             "Código": f'<b><span style="color:red;">{code}</span></b>',
