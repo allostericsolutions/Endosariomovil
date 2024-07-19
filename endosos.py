@@ -94,6 +94,7 @@ patterns_to_remove = [
     r'HERNIAS',
     r'A\s*OTROS\s*PADECIMIENTOS'
 ]
+
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
