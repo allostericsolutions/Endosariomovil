@@ -77,6 +77,7 @@ def extract_and_clean_text(pdf_path):
         r'A\s*OTROS\s*REGISTRO\s*DE\s*CONDICIONES\s*GENERALES',
         r'A\s*OTROS\s*PADECIMIENTOS\s*CON\s*PERIODO\s*DE\s*ESPERA'
     ]
+
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
