@@ -4,37 +4,34 @@ from fpdf import FPDF
 import pandas as pd
 import io
 import re
-import difflib
-from PIL import Image  # Para trabajar con imágenes
+from PIL import Image
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from openpyxl.utils.exceptions import IllegalCharacterError
 
 # Función para preprocesar y normalizar el texto
 def preprocess_text(text):
-    text = text.lower()  # Convertir a minúsculas
-    text = re.sub(r'[^\w\s.]', '', text)  # Eliminar puntuación excepto puntos
-    text = re.sub(r'\s+', ' ', text).strip()  # Reemplazar múltiples espacios por uno y quitar espacios al inicio y final
+    text = text.lower()
+    text = re.sub(r'[^\w\s.]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
     return text
 
 # Función para calcular la similitud semántica entre dos textos usando TF-IDF y Cosine Similarity
 def calculate_semantic_similarity(text1, text2):
-    # Preprocesar los textos
     text1 = preprocess_text(text1)
     text2 = preprocess_text(text2)
-
-    # Vectorizar los textos
     vectorizer = TfidfVectorizer().fit_transform([text1, text2])
     vectors = vectorizer.toarray()
-
-    # Calcular la similitud coseno
     cosine_sim = cosine_similarity(vectors)
-
     return cosine_sim[0, 1] * 100
 
 # Función para extraer y limpiar el texto del PDF
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
+
+    # Eliminar las palabras en mayúsculas justo después de los códigos alfanuméricos
+    code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'
+    raw_text = re.sub(f'({code_pattern})\s*("[A-Z\s]+")', r'\1', raw_text)
 
     # Patrones a eliminar
     patterns_to_remove = [
@@ -56,7 +53,7 @@ def extract_and_clean_text(pdf_path):
         r'A\s*OTROS\s*HALLUX\s*VALGUS',
         r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*INFECCION\s*VIH\s*Y\/O\s*SIDA',
         r'A\s*GASTOS\s*CUBIERTOS\s*GASTOS\s*DEL\s*DONADOR\s*DE\s*ÓRGANOS\s*EN\s*TRASPLANTE',
-        r'A\s*CLAUSULAS\s*GENERALES\s*MOVIMIENTOS\s*DE\s*ASEGURADOS\s*AUTOADMINISTRADA\s*\(INICIO\s*vs\s*RENOVACION\)', # ¡Aquí se agrega la nueva expresión!
+        r'A\s*CLAUSULAS\s*GENERALES\s*MOVIMIENTOS\s*DE\s*ASEGURADOS\s*AUTOADMINISTRADA\s*\(INICIO\s*vs\s*RENOVACION\)',
         r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*CONGENITOS',
         r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*MÉDICOS\s*Y\/O\s*QUIRÚRGICOS',
         r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*PREEXISTENTES',
@@ -68,38 +65,23 @@ def extract_and_clean_text(pdf_path):
         r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO'
     ]
 
-    # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
 
-    # Eliminar la parte en mayúsculas entre comillas
-    raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
-
-    # Agrupar y resaltar códigos alfanuméricos
-    code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'
     text_by_code = {}
     paragraphs = raw_text.split('\n')
     current_code = None
-    
-    # Contar códigos por documento (únicos)
-    code_counts = set()  # Usar un set para contar códigos únicos
 
     for paragraph in paragraphs:
         code_match = re.search(code_pattern, paragraph)
         if code_match:
             current_code = code_match.group(0)
-            paragraph = re.sub(code_pattern, '', paragraph).strip()
-
-            if current_code not in text_by_code:
-                text_by_code[current_code] = paragraph
-            else:
-                text_by_code[current_code] += " " + paragraph
-
-            code_counts.add(current_code)  # Agregar código al set
+            paragraph = paragraph.replace(current_code, '').strip()
+            text_by_code[current_code] = text_by_code.get(current_code, '') + ' ' + paragraph
         elif current_code:
-            text_by_code[current_code] += " " + paragraph
+            text_by_code[current_code] += ' ' + paragraph.strip()
 
-    return text_by_code, len(code_counts)  # Devolver el conteo de códigos únicos
+    return text_by_code, len(set(text_by_code.keys()))
 
 # Función para limpiar caracteres ilegales
 def clean_text(text):
@@ -112,11 +94,11 @@ def to_latin1(text):
 # Función para agregar asteriscos según el porcentaje
 def get_asterisks(similarity_percentage):
     if similarity_percentage > 95:
-        return ""  # Sin asterisco para > 95%
+        return ""  
     elif 90 <= similarity_percentage <= 94:
-        return "*"  # Un asterisco para 90-94%
+        return "*"  
     else:
-        return "**"  # Dos asteriscos para <= 89%
+        return "**"  
 
 # Función para extraer y alinear los números y su contexto
 def extract_and_align_numbers_with_context(text1, text2, context_size=30):
@@ -170,7 +152,7 @@ def create_csv(data):
     return buffer
 
 # Función para crear archivo TXT
-def create_txt(data, code_counts_1, unique_code_count_2):
+def create_txt(data, code_counts_1, unique_code_count_2, missing_in_1, missing_in_2):
     buffer = io.BytesIO()
     buffer.write("## Comparación de Documentos\n\n".encode('utf-8'))
 
@@ -178,8 +160,8 @@ def create_txt(data, code_counts_1, unique_code_count_2):
     buffer.write(data.to_string(index=False, header=True).encode('utf-8'))
 
     buffer.write("\n\n## Conteo de Códigos\n\n".encode('utf-8'))
-    buffer.write(f"**Documento Modelo:** {code_counts_1} (Faltan: {len(all_codes) - code_counts_1})\n".encode('utf-8'))
-    buffer.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan: {', '.join(list(all_codes - set(text_by_code_2.keys())))})\n".encode('utf-8'))
+    buffer.write(f"**Documento Modelo:** {code_counts_1} (Faltan con respecto a la Verificación: {', '.join(missing_in_1)})\n".encode('utf-8'))
+    buffer.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan con respecto al Modelo: {', '.join(missing_in_2)})\n".encode('utf-8'))
 
     buffer.seek(0)
     return buffer
@@ -298,11 +280,11 @@ if uploaded_file_1 and uploaded_file_2:
 
     # Mostrar el conteo de códigos
     st.markdown("### Conteo de Códigos")
-    st.write(f"**Documento Modelo:** {unique_code_count_1} (Faltan: {len(all_codes) - unique_code_count_1})")
-    st.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan: {', '.join(list(all_codes - set(text_by_code_2.keys())))})")
+    st.write(f"**Documento Modelo:** {unique_code_count_1} (Faltan con respecto a la Verificación: {', '.join(missing_in_model)})")
+    st.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan con respecto al Modelo: {', '.join(missing_in_verification)})")
 
     # Botones para descargar los archivos
-    col1, col2, col3 = st.columns(3)  # Tres columnas para botones
+    col1, col2, col3 = st.columns(3)
     with col1:
         download_excel = st.button("Download Comparison Excel")
         if download_excel:
@@ -326,7 +308,7 @@ if uploaded_file_1 and uploaded_file_2:
     with col3:
         download_txt = st.button("Download Comparison TXT")
         if download_txt:
-            txt_buffer = create_txt(comparison_df, unique_code_count_1, unique_code_count_2)  # Pasa los datos necesarios
+            txt_buffer = create_txt(comparison_df, unique_code_count_1, unique_code_count_2, missing_in_model, missing_in_verification)
             st.download_button(
                 label="Descarga TXT",
                 data=txt_buffer,
