@@ -94,10 +94,9 @@ patterns_to_remove = [
     r'CLNICA\s*DE\s*LA\s*COLUMNA'
 ]
 
-
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
-        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
+    raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
 
     # Eliminar la parte en mayúsculas entre comillas
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
