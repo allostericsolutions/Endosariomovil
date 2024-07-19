@@ -37,63 +37,63 @@ def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
 
     # Patrones a eliminar
-patterns_to_remove = [
-    r'HOJA\s*:\s*\d+',
-    r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
-    r'02001\/M\d+',
-    r'CONTRATANTE:\s*GBM\s*GRUPO\s*BURSATIL\s*MEXICANO,\s*S\.A\. DE C\.V\. CASA DE BOLSA', 
-    r'GO\-2\-021', 
-    r'\bCONDICION\s*:\s*', 
-    r'MODIFICACIONES\s*A\s*DEFINICIONES\s*PERIODO\s*DE\s*GRACIA',
-    r'MODIFICACIONES\s*A\s*DEFINICIONES',
-    r'MODIFICACIONES',
-    r'A\s*CLAUSULAS\s*GENERALES\s*PAGO\s*DE\s*COMPLEMENTOS\s*ANTERIORES',
-    r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
-    r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
-    r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA',
-    r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
-    r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
-    r'A\s*OTROS\s*HALLUX\s*VALGUS',
-    r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*INFECCION\s*VIH\s*Y\/O\s*SIDA',
-    r'A\s*GASTOS\s*CUBIERTOS\s*GASTOS\s*DEL\s*DONADOR\s*DE\s*ÓRGANOS\s*EN\s*TRASPLANTE',
-    r'A\s*CLAUSULAS\s*GENERALES\s*MOVIMIENTOS\s*DE\s*ASEGURADOS\s*AUTOADMINISTRADA\s*\(INICIO\s*vs\s*RENOVACION\)', 
-    r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*CONGENITOS',
-    r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*MÉDICOS\s*Y\/O\s*QUIRÚRGICOS',
-    r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*PREEXISTENTES',
-    r'A\s*GASTOS\s*CUBIERTOS\s*TRATAMIENTOS\s*DE\s*REHABILITACION',
-    r'A\s*DEDUCIBLE\s*Y\s*COASEGURO\s*APLICACION\s*DE\s*DEDUCIBLE\s*Y\s*COASEGURO',
-    r'A\s*GASTOS\s*CUBIERTOS\s*CIRCUNCISION\s*NO\s*PROFILACTICA',
-    r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CLAUSULA\s*DE\s*EMERGENCIA\s*EN\s*EL\s*EXTRANJERO',
-    r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA',
-    r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
-    r'CON\s*PERIODO\s*DE\s*ESPERA',
-    r'A\s*GASTOS\s*CUBIERTOS\s*CIRUGIA\s*DE\s*NARIZ\s*Y\s*SENOS\s*PARANASALES',
-    r'A\s*OTROS\s*FRANJA\s*FRONTERIZA',
-    r'RAZON\s*SOCIAL\s*DEL\s*CONTRATANTE',
-    r'A\s*OTROS\s*CONVERSION\s*INDIVIDUAL\s*PARA\s*EL\s*SUBGRUPO1',
-    r'A\s*GASTOS\s*CUBIERTOS\s*HERNIAS',
-    r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*DAO\s*PSIQUIATRICO',
-    r'A\s*GASTOS\s*CUBIERTOS\s*CIRCUNCISION',
-    r'A\s*OTROS\s*REGISTRO\s*DE\s*CONDICIONES\s*GENERALES',
-    r'A\s*OTROS\s*PADECIMIENTOS\s*CON\s*PERIODO\s*DE\s*ESPERA',
-    r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*POR\s*CONSULTAS\s*MEDICAS',
-    r'A\s*OTROS\s*LITOTRIPSIAS',
-    r'A\s*EXCLUSIONES\s*RECIEN\s*NACIDO\s*SANO',
-    r'A\s*OTROS\s*COLUMNA',
-    r'O\s*JUANETES',
-    r'ACCIDENTE',
-    r'A\s*EXCLUSIONES\s*LEGRADO\s*POR\s*ABORTO',
-    r'A\s*EXCLUSIONES\s*AVIACION\s*PARTICULAR',
-    r'A\s*EXCLUSIONES\s*ASALTO',
-    r'A\s*GASTOS\s*CUBIERTOS\s*TRANSPLANTE\s*DE\s*ORGANOS',
-    r'EXCLUSIN\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
-    r'A\s*GASTOS\s*CUBIERTOS\s*RECIEN\s*NACIDO\s*PREMATURO',
-    r'COBERTURA\s*DE\s*DAO\s*PSIQUIATRICO',
-    r'REGISTRO\s*DE\s*CONDICIONES\s*GENERALES',
-    r'CLNICA\s*DE\s*LA\s*COLUMNA',
-    r'HERNIAS',
-    r'A\s*OTROS\s*PADECIMIENTOS'
-]
+    patterns_to_remove = [
+        r'HOJA\s*:\s*\d+',
+        r'G\.M\.M\. GRUPO PROPIA MEDICALIFE',
+        r'02001\/M\d+',
+        r'CONTRATANTE:\s*GBM\s*GRUPO\s*BURSATIL\s*MEXICANO,\s*S\.A\. DE C\.V\. CASA DE BOLSA',
+        r'GO\-2\-021',
+        r'\bCONDICION\s*:\s*',
+        r'MODIFICACIONES\s*A\s*DEFINICIONES\s*PERIODO\s*DE\s*GRACIA',
+        r'MODIFICACIONES\s*A\s*DEFINICIONES',
+        r'MODIFICACIONES',
+        r'A\s*CLAUSULAS\s*GENERALES\s*PAGO\s*DE\s*COMPLEMENTOS\s*ANTERIORES',
+        r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
+        r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
+        r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA',
+        r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
+        r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
+        r'A\s*OTROS\s*HALLUX\s*VALGUS',
+        r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*INFECCION\s*VIH\s*Y\/O\s*SIDA',
+        r'A\s*GASTOS\s*CUBIERTOS\s*GASTOS\s*DEL\s*DONADOR\s*DE\s*ÓRGANOS\s*EN\s*TRASPLANTE',
+        r'A\s*CLAUSULAS\s*GENERALES\s*MOVIMIENTOS\s*DE\s*ASEGURADOS\s*AUTOADMINISTRADA\s*\(INICIO\s*vs\s*RENOVACION\)',
+        r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*CONGENITOS',
+        r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*MÉDICOS\s*Y\/O\s*QUIRÚRGICOS',
+        r'A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*PREEXISTENTES',
+        r'A\s*GASTOS\s*CUBIERTOS\s*TRATAMIENTOS\s*DE\s*REHABILITACION',
+        r'A\s*DEDUCIBLE\s*Y\s*COASEGURO\s*APLICACION\s*DE\s*DEDUCIBLE\s*Y\s*COASEGURO',
+        r'A\s*GASTOS\s*CUBIERTOS\s*CIRCUNCISION\s*NO\s*PROFILACTICA',
+        r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CLAUSULA\s*DE\s*EMERGENCIA\s*EN\s*EL\s*EXTRANJERO',
+        r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA',
+        r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
+        r'CON\s*PERIODO\s*DE\s*ESPERA',
+        r'A\s*GASTOS\s*CUBIERTOS\s*CIRUGIA\s*DE\s*NARIZ\s*Y\s*SENOS\s*PARANASALES',
+        r'A\s*OTROS\s*FRANJA\s*FRONTERIZA',
+        r'RAZON\s*SOCIAL\s*DEL\s*CONTRATANTE',
+        r'A\s*OTROS\s*CONVERSION\s*INDIVIDUAL\s*PARA\s*EL\s*SUBGRUPO1',
+        r'A\s*GASTOS\s*CUBIERTOS\s*HERNIAS',
+        r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*DAO\s*PSIQUIATRICO',
+        r'A\s*GASTOS\s*CUBIERTOS\s*CIRCUNCISION',
+        r'A\s*OTROS\s*REGISTRO\s*DE\s*CONDICIONES\s*GENERALES',
+        r'A\s*OTROS\s*PADECIMIENTOS\s*CON\s*PERIODO\s*DE\s*ESPERA',
+        r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*POR\s*CONSULTAS\s*MEDICAS',
+        r'A\s*OTROS\s*LITOTRIPSIAS',
+        r'A\s*EXCLUSIONES\s*RECIEN\s*NACIDO\s*SANO',
+        r'A\s*OTROS\s*COLUMNA',
+        r'O\s*JUANETES',
+        r'ACCIDENTE',
+        r'A\s*EXCLUSIONES\s*LEGRADO\s*POR\s*ABORTO',
+        r'A\s*EXCLUSIONES\s*AVIACION\s*PARTICULAR',
+        r'A\s*EXCLUSIONES\s*ASALTO',
+        r'A\s*GASTOS\s*CUBIERTOS\s*TRANSPLANTE\s*DE\s*ORGANOS',
+        r'EXCLUSIN\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
+        r'A\s*GASTOS\s*CUBIERTOS\s*RECIEN\s*NACIDO\s*PREMATURO',
+        r'COBERTURA\s*DE\s*DAO\s*PSIQUIATRICO',
+        r'REGISTRO\s*DE\s*CONDICIONES\s*GENERALES',
+        r'CLNICA\s*DE\s*LA\s*COLUMNA',
+        r'HERNIAS',
+        r'A\s*OTROS\s*PADECIMIENTOS'
+    ]
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
@@ -106,7 +106,7 @@ patterns_to_remove = [
     text_by_code = {}
     paragraphs = raw_text.split('\n')
     current_code = None
-    
+
     # Contar códigos por documento (únicos)
     code_counts = set()  # Usar un set para contar códigos únicos
 
@@ -250,7 +250,7 @@ if uploaded_file_1 and uploaded_file_2:
         else:
             sim_percentage = calculate_semantic_similarity(doc1_text, doc2_text)
             similarity_str = f'{sim_percentage:.2f}%'
-        
+
         # Si un número no está presente, el porcentaje de similitud numérica es 0
         if doc1_text == "Ausente" or doc2_text == "Ausente":
             num_similarity_percentage = 0
@@ -260,7 +260,7 @@ if uploaded_file_1 and uploaded_file_2:
             doc1_num, doc1_context, doc2_num, doc2_context = extract_and_align_numbers_with_context(doc1_text, doc2_text)
             doc1_num_display = f'<details><summary>{doc1_num}</summary><p>{doc1_context}</p></details>'
             doc2_num_display = f'<details><summary>{doc2_num}</summary><p>{doc2_context}</p></details>'
-            
+
             num_similarity_percentage = calculate_numbers_similarity(doc1_num, doc2_num)
 
         row = {
@@ -332,7 +332,7 @@ if uploaded_file_1 and uploaded_file_2:
     with col1:
         download_excel = st.button("Download Comparison Excel")
         if download_excel:
-            excel_buffer = create_excel(comparison_df) 
+            excel_buffer = create_excel(comparison_df)
             st.download_button(
                 label="Descarga Excel",
                 data=excel_buffer,
