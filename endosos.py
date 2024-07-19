@@ -31,7 +31,8 @@ def extract_and_clean_text(pdf_path):
 
     # Eliminar las palabras en mayúsculas justo después de los códigos alfanuméricos
     code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'
-    raw_text = re.sub(f'({code_pattern})\s*("[A-Z\s]+")', r'\1', raw_text)
+    raw_text = re.sub(f'({code_pattern})\s*"[A-Z\s]+"', r'\1', raw_text)
+    raw_text = re.sub(f'({code_pattern})\s*[A-Z\s]+', r'\1', raw_text)
 
     # Patrones a eliminar
     patterns_to_remove = [
@@ -94,11 +95,11 @@ def to_latin1(text):
 # Función para agregar asteriscos según el porcentaje
 def get_asterisks(similarity_percentage):
     if similarity_percentage > 95:
-        return ""  
+        return ""
     elif 90 <= similarity_percentage <= 94:
-        return "*"  
+        return "*"
     else:
-        return "**"  
+        return "**"
 
 # Función para extraer y alinear los números y su contexto
 def extract_and_align_numbers_with_context(text1, text2, context_size=30):
@@ -128,9 +129,10 @@ def calculate_numbers_similarity(nums1, nums2):
     nums1_list = nums1.split()
     nums2_list = nums2.split()
     matches = 0
-    for n1, n2 in zip(nums1_list, nums2_list):
-        if n1 == n2:
-            matches += 1
+    if nums1_list:
+        for n1, n2 in zip(nums1_list, nums2_list):
+            if n1 == n2:
+                matches += 1
     return (matches / len(nums1_list)) * 100 if nums1_list else 0
 
 # Función para crear archivo Excel
@@ -152,7 +154,7 @@ def create_csv(data):
     return buffer
 
 # Función para crear archivo TXT
-def create_txt(data, code_counts_1, unique_code_count_2, missing_in_1, missing_in_2):
+def create_txt(data, code_counts_1, unique_code_count_2, missing_in_model, missing_in_verification):
     buffer = io.BytesIO()
     buffer.write("## Comparación de Documentos\n\n".encode('utf-8'))
 
@@ -160,8 +162,8 @@ def create_txt(data, code_counts_1, unique_code_count_2, missing_in_1, missing_i
     buffer.write(data.to_string(index=False, header=True).encode('utf-8'))
 
     buffer.write("\n\n## Conteo de Códigos\n\n".encode('utf-8'))
-    buffer.write(f"**Documento Modelo:** {code_counts_1} (Faltan con respecto a la Verificación: {', '.join(missing_in_1)})\n".encode('utf-8'))
-    buffer.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan con respecto al Modelo: {', '.join(missing_in_2)})\n".encode('utf-8'))
+    buffer.write(f"**Documento Modelo:** {code_counts_1} (Faltan con respecto a la Verificación: {', '.join(missing_in_verification)})\n".encode('utf-8'))
+    buffer.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan con respecto al Modelo: {', '.join(missing_in_model)})\n".encode('utf-8'))
 
     buffer.seek(0)
     return buffer
@@ -235,7 +237,7 @@ if uploaded_file_1 and uploaded_file_2:
 
     # Generar HTML para la tabla con títulos de columnas fijos y estilización adecuada
     def generate_html_table(df):
-        html = df.to_html(index=False, escape=False, render_links=True)  # render_links=True para estilos CSS
+        html = df.to_html(index=False, escape=False, render_links=True)
         html = html.replace(
             '<table border="1" class="dataframe">',
             '<table border="1" class="dataframe" style="width:100%; border-collapse:collapse;">'
@@ -278,6 +280,10 @@ if uploaded_file_1 and uploaded_file_2:
     st.markdown("### Comparación de Documentos")
     st.markdown(table_html, unsafe_allow_html=True)
 
+    # Calcular códigos faltantes
+    missing_in_model = sorted(all_codes - set(text_by_code_1.keys()))
+    missing_in_verification = sorted(all_codes - set(text_by_code_2.keys()))
+
     # Mostrar el conteo de códigos
     st.markdown("### Conteo de Códigos")
     st.write(f"**Documento Modelo:** {unique_code_count_1} (Faltan con respecto a la Verificación: {', '.join(missing_in_model)})")
@@ -286,9 +292,8 @@ if uploaded_file_1 and uploaded_file_2:
     # Botones para descargar los archivos
     col1, col2, col3 = st.columns(3)
     with col1:
-        download_excel = st.button("Download Comparison Excel")
-        if download_excel:
-            excel_buffer = create_excel(comparison_df) 
+        if st.button("Download Comparison Excel"):
+            excel_buffer = create_excel(comparison_df)
             st.download_button(
                 label="Descarga Excel",
                 data=excel_buffer,
@@ -296,8 +301,7 @@ if uploaded_file_1 and uploaded_file_2:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
     with col2:
-        download_csv = st.button("Download Comparison CSV")
-        if download_csv:
+        if st.button("Download Comparison CSV"):
             csv_buffer = create_csv(comparison_df)
             st.download_button(
                 label="Descarga CSV",
@@ -306,8 +310,7 @@ if uploaded_file_1 and uploaded_file_2:
                 mime="text/csv"
             )
     with col3:
-        download_txt = st.button("Download Comparison TXT")
-        if download_txt:
+        if st.button("Download Comparison TXT"):
             txt_buffer = create_txt(comparison_df, unique_code_count_1, unique_code_count_2, missing_in_model, missing_in_verification)
             st.download_button(
                 label="Descarga TXT",
