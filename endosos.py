@@ -36,12 +36,7 @@ def calculate_semantic_similarity(text1, text2):
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
-  # Eliminar las palabras en mayúsculas justo después de los códigos alfanuméricos
-    code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'
-    raw_text = re.sub(f'({code_pattern})\s*"[A-Z\s]+"', r'\1', raw_text)
-    raw_text = re.sub(f'({code_pattern})\s*[A-Z\s]+', r'\1', raw_text)
-
-  # Patrones a eliminar
+   # Patrones a eliminar
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
