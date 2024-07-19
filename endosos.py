@@ -36,6 +36,7 @@ def calculate_semantic_similarity(text1, text2):
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
 
+      
     # Patrones a eliminar
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
@@ -48,6 +49,7 @@ def extract_and_clean_text(pdf_path):
         r'MODIFICACIONES\s*A\s*DEFINICIONES',
         r'MODIFICACIONES\s*A\s*DEFINICIONES',  # Asegurar variación exacta
         r'MODIFICACIONES',
+        r'MODIFICACIONES\s*A\s*OTROS',  # Nuevo patrón
         r'A\s*CLAUSULAS\s*GENERALES\s*PAGO\s*DE\s*COMPLEMENTOS\s*ANTERIORES',
         r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
         r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
@@ -96,6 +98,7 @@ def extract_and_clean_text(pdf_path):
         r'COBERTURA\s*DE\s*DAO\s*PSIQUIATRICO',
         r'REGISTRO\s*DE\s*CONDICIONES\s*GENERALES',
         r'CLNICA\s*DE\s*LA\s*COLUMNA',
+        r'CLÍNICA\s*DE\s*LA\s*COLUMNA',  # Nuevo patrón
         r'HERNIAS',
         r'A\s*OTROS\s*PADECIMIENTOS',
         r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*POR\s*CONSULTA\s*Y\s*PROCEDIMIENTOS\s*QUIRURGICOS',
