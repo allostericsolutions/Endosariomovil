@@ -1,4 +1,42 @@
-# Patrones a eliminar
+import streamlit as st
+from pdfminer.high_level import extract_text
+from fpdf import FPDF
+import pandas as pd
+import io
+import re
+import difflib
+from PIL import Image  # Para trabajar con imágenes
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from openpyxl.utils.exceptions import IllegalCharacterError
+
+# Función para preprocesar y normalizar el texto
+def preprocess_text(text):
+    text = text.lower()  # Convertir a minúsculas
+    text = re.sub(r'[^\w\s.]', '', text)  # Eliminar puntuación excepto puntos
+    text = re.sub(r'\s+', ' ', text).strip()  # Reemplazar múltiples espacios por uno y quitar espacios al inicio y final
+    return text
+
+# Función para calcular la similitud semántica entre dos textos usando TF-IDF y Cosine Similarity
+def calculate_semantic_similarity(text1, text2):
+    # Preprocesar los textos
+    text1 = preprocess_text(text1)
+    text2 = preprocess_text(text2)
+
+    # Vectorizar los textos
+    vectorizer = TfidfVectorizer().fit_transform([text1, text2])
+    vectors = vectorizer.toarray()
+
+    # Calcular la similitud coseno
+    cosine_sim = cosine_similarity(vectors)
+
+    return cosine_sim[0, 1] * 100
+
+# Función para extraer y limpiar el texto del PDF
+def extract_and_clean_text(pdf_path):
+    raw_text = extract_text(pdf_path)
+
+    # Patrones a eliminar
 patterns_to_remove = [
     r'HOJA\s*:\s*\d+',
     r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
@@ -56,10 +94,9 @@ patterns_to_remove = [
     r'HERNIAS',
     r'A\s*OTROS\s*PADECIMIENTOS'
 ]
-
-# Remover cada patrón utilizando una expresión regular
-for pattern in patterns_to_remove:
-    raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
+    # Remover cada patrón utilizando una expresión regular
+    for pattern in patterns_to_remove:
+        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
 
     # Eliminar la parte en mayúsculas entre comillas
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
@@ -89,14 +126,6 @@ for pattern in patterns_to_remove:
             text_by_code[current_code] += " " + paragraph
 
     return text_by_code, len(code_counts)  # Devolver el conteo de códigos únicos
-
-# Función para limpiar caracteres ilegales
-def clean_text(text):
-    return ''.join(filter(lambda x: x in set(chr(i) for i in range(32, 127)), text))
-
-# Función para convertir texto a "latin1" y manejar caracteres no compatibles
-def to_latin1(text):
-    return clean_text(text).encode('latin1', 'replace').decode('latin1')
 
 # Función para limpiar caracteres ilegales
 def clean_text(text):
