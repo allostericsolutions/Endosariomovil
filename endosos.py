@@ -146,10 +146,6 @@ def extract_and_clean_text(pdf_path):
 def clean_text(text):
     return ''.join(filter(lambda x: x in set(chr(i) for i in range(32, 127)), text))
 
-# Función para convertir texto a "latin1" y manejar caracteres no compatibles
-def to_latin1(text):
-    return clean_text(text).encode('latin1', 'replace').decode('latin1')
-
 # Función para agregar asteriscos según el porcentaje
 def get_asterisks(similarity_percentage):
     if similarity_percentage > 95:
@@ -280,9 +276,9 @@ if uploaded_file_1 and uploaded_file_2:
 
         row = {
             "Código": f'<b><span style="color:red;">{code}</span></b>',
-            "Documento Modelo": to_latin1(doc1_text_display),
+            "Documento Modelo": doc1_text_display, 
             "Valores numéricos Modelo": f'<details><summary>Contexto</summary>{doc1_num_display}</details>',
-            "Documento Verificación": to_latin1(doc2_text_display),
+            "Documento Verificación": doc2_text_display,
             "Valores numéricos Verificación": f'<details><summary>Contexto</summary>{doc2_num_display}</details>',
             "Similitud Texto": similarity_str,
             "Similitud Numérica": f'{num_similarity_percentage:.2f}%'
