@@ -2,10 +2,6 @@ import streamlit as st
 from pdfminer.high_level import extract_text
 from fpdf import FPDF
 import pandas as pd
-import ioimport streamlit as st
-from pdfminer.high_level import extract_text
-from fpdf import FPDF
-import pandas as pd
 import io
 import re
 import difflib
