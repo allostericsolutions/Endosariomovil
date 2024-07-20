@@ -215,7 +215,7 @@ def create_txt(data, code_counts_1, unique_code_count_2):
     buffer.write(data.to_string(index=False, header=True).encode('utf-8'))
 
     buffer.write("\n\n## Conteo de Códigos\n\n".encode('utf-8'))
-    buffer.write(f"**Documento Modelo:** {code_counts_1} (Faltan: {', '.join(list(all_codes - set(text_by_code_1.keys())))})\n".encode('utf-8'))
+    buffer.write(f"**Documento Modelo:** {code_counts_1} (Faltan: {', '.join(list(all_codes - set(codes_model)))})\n".encode('utf-8'))
     buffer.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan: {', '.join(list(all_codes - set(text_by_code_2.keys())))})\n".encode('utf-8'))
 
     buffer.seek(0)
@@ -276,9 +276,9 @@ if uploaded_file_1 and uploaded_file_2:
 
         row = {
             "Código": f'<b><span style="color:red;">{code}</span></b>',
-            "Documento Modelo": doc1_text_display, 
+            "Documento Modelo": doc1_text_display if doc1_text != "Ausente" else f'<b style="color:red;">Ausente</b>',  # Estilo para Ausente
             "Valores numéricos Modelo": f'<details><summary>Contexto</summary>{doc1_num_display}</details>',
-            "Documento Verificación": doc2_text_display,
+            "Documento Verificación": doc2_text_display if doc2_text != "Ausente" else f'<b style="color:red;">Ausente</b>',  # Estilo para Ausente
             "Valores numéricos Verificación": f'<details><summary>Contexto</summary>{doc2_num_display}</details>',
             "Similitud Texto": similarity_str,
             "Similitud Numérica": f'{num_similarity_percentage:.2f}%'
