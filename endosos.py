@@ -339,34 +339,33 @@ if uploaded_file_1 and uploaded_file_2:
     st.write(f"**Documento Verificación:** {unique_code_count_2} (Faltan: {', '.join(list(all_codes - set(text_by_code_2.keys())))})")
 
     # Botones para descargar los archivos
-    col1, col2, col3 = st.columns(3)  # Tres columnas para botones
-    with col1:
-        download_excel = st.button("Download Comparison Excel")
-        if download_excel:
-            excel_buffer = create_excel(comparison_df) 
-            st.download_button(
-                label="Descarga Excel",
-                data=excel_buffer,
-                file_name="comparison.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-    with col2:
-        download_csv = st.button("Download Comparison CSV")
-        if download_csv:
-            csv_buffer = create_csv(comparison_df)
-            st.download_button(
-                label="Descarga CSV",
-                data=csv_buffer,
-                file_name="comparison.csv",
-                mime="text/csv"
-            )
-    with col3:
-        download_txt = st.button("Download Comparison TXT")
-        if download_txt:
-            txt_buffer = create_txt(comparison_df, unique_code_count_1, unique_code_count_2)  # Pasa los datos necesarios
-            st.download_button(
-                label="Descarga TXT",
-                data=txt_buffer,
-                file_name="comparison.txt",
-                mime="text/plain"
-            )
+    # ... (código para botones de descarga)
+
+    # Agregar JavaScript para copiar al portapapeles
+    st.markdown("""
+    <script>
+    function copyText(elementId) {
+        var copyText = document.getElementById(elementId);
+        navigator.clipboard.writeText(copyText.innerText)
+        .then(() => {
+            // Optional: Show a success message
+            alert("Texto copiado al portapapeles!");
+        })
+        .catch(err => {
+            console.error("Fallo al copiar", err);
+        });
+    }
+    </script>
+    """, unsafe_allow_html=True)
+
+    # Agregar botones de "Copiar" a cada celda
+    for i, row in comparison_df.iterrows():
+        for column in comparison_df.columns:
+            if column != "Código":  # No agrega botón a la columna "Código"
+                cell_value = str(row[column])
+                st.markdown(f"""
+                <div style="display:inline-block; margin-right: 5px;">
+                <button id="copy-{i}-{column}" onclick="copyText('copy-{i}-{column}')">Copiar</button>
+                <span id="copy-{i}-{column}">{cell_value}</span>
+                </div>
+                """, unsafe_allow_html=True)
