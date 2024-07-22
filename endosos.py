@@ -36,7 +36,11 @@ def calculate_semantic_similarity(text1, text2):
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
-    # Patrones a eliminar
+   # Función para extraer y limpiar el texto del PDF
+def extract_and_clean_text(pdf_path):
+    raw_text = extract_text(pdf_path)
+    
+    # Patrones a eliminar que están completamente en mayúsculas (asegurando espacios opcionales menores)
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
@@ -119,6 +123,7 @@ def extract_and_clean_text(pdf_path):
         r'A\s*EXCLUSIONES\s*ACUPUNTURISTAS',  # Nuevo patrón
         r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS'  # Nuevo patrón
     ]
+    
     
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
