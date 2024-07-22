@@ -41,7 +41,7 @@ def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
      
-    # Patrones a eliminar que están completamente en mayúsculas (asegurando espacios opcionales menores)
+    # Patrones a eliminar que están completamente en mayúsculas
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
@@ -122,7 +122,10 @@ def extract_and_clean_text(pdf_path):
         r'A\s*OTROS\s*AMIGDALAS\s*Y\s*ADENOIDES',  # Nuevo patrón
         r'A\s*GASTOS\s*CUBIERTOS\s*MEDICAMENTOS',  # Nuevo patrón
         r'A\s*EXCLUSIONES\s*ACUPUNTURISTAS',  # Nuevo patrón
-        r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS'  # Nuevo patrón
+        r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS'  # Nuevo patrón,
+
+        # Añadimos el patrón pedido
+        r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*POR\s*CONSULTAS\s*MÉDICAS'
     ]
     
     
