@@ -128,7 +128,8 @@ def extract_and_clean_text(pdf_path):
         r'HONORARIOS\s*POR\s*CONSULTAS\s*MEDICAS'
         r'A\s*GASTOS',
         r'HONORARIOS',
-        r'POR\s*CONSULTAS'
+        r'POR\s*CONSULTAS',
+        r'CUBIERTOS',
     ]
     
     
