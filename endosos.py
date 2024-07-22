@@ -125,7 +125,10 @@ def extract_and_clean_text(pdf_path):
         r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS',
         r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS',
         r'HONORARIOS\s*POR\s*CONSULTAS\s*MÉDICAS',
-        r'HONORARIOS\s*POR\s*CONSULTAS\s*MEDICAS'  # sin acento
+        r'HONORARIOS\s*POR\s*CONSULTAS\s*MEDICAS'
+        r'A\s*GASTOS',
+        r'HONORARIOS',
+        r'POR\s*CONSULTAS'
     ]
     
     
