@@ -35,13 +35,7 @@ def calculate_semantic_similarity(text1, text2):
 # Función para extraer y limpiar el texto del PDF
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
-    
-   # Función para extraer y limpiar el texto del PDF
-def extract_and_clean_text(pdf_path):
-    raw_text = extract_text(pdf_path)
-    
-     
-   
+
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
@@ -125,7 +119,7 @@ def extract_and_clean_text(pdf_path):
         r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS',
         r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS',
         r'HONORARIOS\s*POR\s*CONSULTAS\s*MÉDICAS',
-        r'HONORARIOS\s*POR\s*CONSULTAS\s*MEDICAS'
+        r'HONORARIOS\s*POR\s*CONSULTAS\s*MEDICAS',
         r'A\s*GASTOS',
         r'HONORARIOS',
         r'POR\s*CONSULTAS',
@@ -135,19 +129,18 @@ def extract_and_clean_text(pdf_path):
         r'OTROS',
     ]
 
-     # Solo eliminar si la frase está completamente en mayúsculas
+    # Eliminar solo si la frase está completamente en mayúsculas
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text)
     
-    
     # Remover cada patrón utilizando una expresión regular
-    for pattern in patterns_to_remove:
-        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
+    # for pattern in patterns_to_remove:
+    #     raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
     
     # Mostrar si hay coincidencias en el texto que no se eliminaron
-    for pattern in patterns_to_remove:
-        if re.search(pattern, raw_text, flags=re.IGNORECASE):
-            print(f"Patrón no eliminado: {pattern}")
+    # for pattern in patterns_to_remove:
+    #     if re.search(pattern, raw_text, flags=re.IGNORECASE):
+    #         print(f"Patrón no eliminado: {pattern}")
     
     # Eliminar la parte en mayúsculas entre comillas
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
@@ -407,5 +400,3 @@ if uploaded_file_1 and uploaded_file_2:
                 file_name="comparison.txt",
                 mime="text/plain"
             )
-
-
