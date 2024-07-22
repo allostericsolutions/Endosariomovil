@@ -122,10 +122,10 @@ def extract_and_clean_text(pdf_path):
         r'A\s*OTROS\s*AMIGDALAS\s*Y\s*ADENOIDES',  # Nuevo patrón
         r'A\s*GASTOS\s*CUBIERTOS\s*MEDICAMENTOS',  # Nuevo patrón
         r'A\s*EXCLUSIONES\s*ACUPUNTURISTAS',  # Nuevo patrón
-        r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS'  # Nuevo patrón,
+        r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS',  # Nuevo patrón
 
-        # Añadimos el patrón pedido
-        r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*POR\s*CONSULTAS\s*MÉDICAS'
+        # Añadimos el patrón específico
+        r'HONORARIOS\s*POR\s*CONSULTAS\s*MÉDICAS'
     ]
     
     
