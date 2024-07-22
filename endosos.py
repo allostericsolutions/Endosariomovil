@@ -124,6 +124,7 @@ def extract_and_clean_text(pdf_path):
         r'HONORARIOS',
         r'POR\s*CONSULTAS',
         r'CUBIERTOS',
+        r'GASTOS',
         r'ESTRBISMO',
         r'OTROS',
     ]
@@ -142,7 +143,7 @@ def extract_and_clean_text(pdf_path):
     #         print(f"Patrón no eliminado: {pattern}")
     
     # Eliminar la parte en mayúsculas entre comillas
-    raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
+    raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)  # Se eliminó flags=re.IGNORECASE
 
     # Agrupar y resaltar códigos alfanuméricos
     code_pattern = r'\b[A-Z]{2}\.\d{3}\.\d{3}\b'
