@@ -42,19 +42,18 @@ def extract_and_clean_text(pdf_path):
     
      
    
-    # Patrones a eliminar que están completamente en mayúsculas
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
         r'G\.M\.M\. GRUPO PROPIA MEDICALIFE', 
         r'02001\/M\d+',
-        r'CONTRATANTE:\s*GBM\s*GRUPO\s*BURSATIL\s*MEXICANO,\s*S\.A\. DE C\. V\. CASA DE BOLSA', 
+        r'CONTRATANTE:\s*GBM\s*GRUPO\s*BURSATIL\s*MEXICANO,\s*S\.A\. DE C\.V\. CASA DE BOLSA', 
         r'GO\-2\-021', 
         r'\bCONDICION\s*:\s*',
         r'MODIFICACIONES\s*A\s*DEFINICIONES\s*PERIODO\s*DE\s*GRACIA',
         r'MODIFICACIONES\s*A\s*DEFINICIONES',
-        r'MODIFICACIONES\s*A\s*DEFINICIONES',  # Asegurar variación exacta
+        r'MODIFICACIONES\s*A\s*DEFINICIONES',
         r'MODIFICACIONES',
-        r'MODIFICACIONES\s*A\s*OTROS',  # Nuevo patrón
+        r'MODIFICACIONES\s*A\s*OTROS',
         r'A\s*CLAUSULAS\s*GENERALES\s*PAGO\s*DE\s*COMPLEMENTOS\s*ANTERIORES',
         r'A\s*GASTOS\s*CUBIERTOS\s*MATERNIDAD',
         r'A\s*EXCLUSIONES\s*MOTOCICLISMO',
@@ -74,9 +73,9 @@ def extract_and_clean_text(pdf_path):
         r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CLAUSULA\s*DE\s*EMERGENCIA\s*EN\s*EL\s*EXTRANJERO',
         r'A\s*CLAUSULAS\s*ADICIONALES\s*OPCIO\s*CORRECCION\s*DE\s*LA\s*VISTA',
         r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
-        r'EXCLUSIN\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',  # Posible variación
-        r'EXCLUSIN\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',  # Asegurar
-        r'EXCLUSIÓN\s*PRESTADORES\s*DE?\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO', # Para variación "EXCLUSIÓN"
+        r'EXCLUSIN\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
+        r'EXCLUSIN\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
+        r'EXCLUSIÓN\s*PRESTADORES\s*DE?\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
         r'CON\s*PERIODO\s*DE\s*ESPERA',
         r'A\s*GASTOS\s*CUBIERTOS\s*CIRUGIA\s*DE\s*NARIZ\s*Y\s*SENOS\s*PARANASALES',
         r'A\s*OTROS\s*FRANJA\s*FRONTERIZA',
@@ -97,36 +96,34 @@ def extract_and_clean_text(pdf_path):
         r'A\s*EXCLUSIONES\s*AVIACION\s*PARTICULAR',
         r'A\s*EXCLUSIONES\s*ASALTO',
         r'A\s*GASTOS\s*CUBIERTOS\s*TRANSPLANTE\s*DE\s*ORGANOS',
-        r'EXCLUSIN\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO RECONOCIDOS,\s*FUERA\s*DE CONVENIO', # Sin espacio entre NO y RECONOCIDOS en NAS
-        r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',  # Duplicado para asegurar
+        r'EXCLUSIN\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO RECONOCIDOS,\s*FUERA\s*DE CONVENIO',
+        r'EXCLUSION\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
         r'A\s*GASTOS\s*CUBIERTOS\s*RECIEN\s*NACIDO\s*PREMATURO',
         r'COBERTURA\s*DE\s*DAO\s*PSIQUIATRICO',
         r'REGISTRO\s*DE\s*CONDICIONES\s*GENERALES',
         r'CLNICA\s*DE\s*LA\s*COLUMNA',
-        r'CLÍNICA\s*DE\s*LA\s*COLUMNA',  # Nuevo patrón
+        r'CLÍNICA\s*DE\s*LA\s*COLUMNA',
         r'HERNIAS',
         r'A\s*OTROS\s*PADECIMIENTOS',
         r'A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*POR\s*CONSULTA\s*Y\s*PROCEDIMIENTOS\s*QUIRURGICOS',
         r'A\s*OTROS\s*CLNICA\s*DE\s*LA\s*COLUMNA',
         r'MODIFICACIONES\s*A\s*DEFINICIONES',
         r'EXCLUSIÓN\s*PRESTADORES\s*DE\s*SERVICIOS\s*MEDICOS\s*NO\s*RECONOCIDOS,\s*FUERA\s*DE\s*CONVENIO',
-        r'A\s*OTROS\s*ENDOSO\s*DE\s*CONTINUIDAD\s*DE\s*NEGOCIO\s*POR\s*RENOVACIÓN',  # Nuevo patrón
-        r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*POR\s*CONSULTAS\s*MÉDICAS',  # Nuevo patrón
-        r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*PREEXISTENTES\s*CON\s*PERIODO\s*DE\s*ESPERA',  # Nuevo patrón
-        r'MODIFICACIONES\s*A\s*OTROS\s*ESTRABISMO',  # Nuevo patrón
-        r'A\s*EXCLUSIONES\s*DEPORTES\s*PELIGROSOS',  # Nuevo patrón
-        r'A\s*EXCLUSIONES\s*AMPLIACION\s*COBERTURA\s*DE\s*S',  # Nuevo patrón
-        r'A\s*EXCLUSIONES\s*MENOPAUSIA',  # Nuevo patrón
-        r'A\s*OTROS\s*LESIONES\s*PIGMENTARIAS\s*Y\s*LUNARES',  # Nuevo patrón
-        r'A\s*OTROS\s*ACNÉ',  # Nuevo patrón
-        r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*DAÑO\s*PSIQUIATRICO',  # Nuevo patrón
-        r'A\s*OTROS\s*AMIGDALAS\s*Y\s*ADENOIDES',  # Nuevo patrón
-        r'A\s*GASTOS\s*CUBIERTOS\s*MEDICAMENTOS',  # Nuevo patrón
-        r'A\s*EXCLUSIONES\s*ACUPUNTURISTAS',  # Nuevo patrón
-        r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS',  # Nuevo patrón
-
-        # Añadimos el patrón específico
-        r'HONORARIOS\s*POR\s*CONSULTAS\s*MÉDICAS'
+        r'A\s*OTROS\s*ENDOSO\s*DE\s*CONTINUIDAD\s*DE\s*NEGOCIO\s*POR\s*RENOVACIÓN',
+        r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*POR\s*CONSULTAS\s*MÉDICAS',
+        r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*PREEXISTENTES\s*CON\s*PERIODO\s*DE\s*ESPERA',
+        r'MODIFICACIONES\s*A\s*OTROS\s*ESTRABISMO',
+        r'A\s*EXCLUSIONES\s*DEPORTES\s*PELIGROSOS',
+        r'A\s*EXCLUSIONES\s*AMPLIACION\s*COBERTURA\s*DE\s*S',
+        r'A\s*EXCLUSIONES\s*MENOPAUSIA',
+        r'A\s*OTROS\s*LESIONES\s*PIGMENTARIAS\s*Y\s*LUNARES',
+        r'A\s*OTROS\s*ACNÉ',
+        r'A\s*GASTOS\s*CUBIERTOS\s*COBERTURA\s*DE\s*DAÑO\s*PSIQUIATRICO',
+        r'A\s*OTROS\s*AMIGDALAS\s*Y\s*ADENOIDES',
+        r'A\s*GASTOS\s*CUBIERTOS\s*MEDICAMENTOS',
+        r'A\s*EXCLUSIONES\s*ACUPUNTURISTAS',
+        r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS',
+        r'CUBIERTOS'
     ]
     
     
