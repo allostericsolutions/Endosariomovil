@@ -123,7 +123,12 @@ def extract_and_clean_text(pdf_path):
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
-
+    
+    # Mostrar si hay coincidencias en el texto que no se eliminaron
+    for pattern in patterns_to_remove:
+        if re.search(pattern, raw_text, flags=re.IGNORECASE):
+            print(f"Patrón no eliminado: {pattern}")
+    
     # Eliminar la parte en mayúsculas entre comillas
     raw_text = re.sub(r'"\s*[A-Z\s]+\s*"\s*', '', raw_text)
 
