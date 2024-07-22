@@ -40,6 +40,7 @@ def extract_and_clean_text(pdf_path):
 def extract_and_clean_text(pdf_path):
     raw_text = extract_text(pdf_path)
     
+     
     # Patrones a eliminar que están completamente en mayúsculas (asegurando espacios opcionales menores)
     patterns_to_remove = [
         r'HOJA\s*:\s*\d+',
