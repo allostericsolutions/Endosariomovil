@@ -117,7 +117,6 @@ patterns_to_remove = [
     r'A\s*EXCLUSIONES\s*ACUPUNTURISTAS',  # Nuevo patrón
     r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS'  # Nuevo patrón
 ]
-
     # Remover cada patrón utilizando una expresión regular
     for pattern in patterns_to_remove:
         raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE)
