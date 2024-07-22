@@ -114,7 +114,10 @@ def extract_and_clean_text(pdf_path):
         r'A\s*OTROS\s*AMIGDALAS\s*Y\s*ADENOIDES',  # Nuevo patrón
         r'A\s*GASTOS\s*CUBIERTOS\s*MEDICAMENTOS',  # Nuevo patrón
         r'A\s*EXCLUSIONES\s*ACUPUNTURISTAS',  # Nuevo patrón
-        r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS'  # Nuevo patrón
+        r'A\s*EXCLUSIONES\s*VITAMINAS\s*Y\s*COMPLEMENTOS\s*ALIMENTICIOS',  # Nuevo patrón
+        r'A\s*OTROS\s*ENDOSO\s*DE\s*CONTINUIDAD\s*DE\s*NEGOCIO\s*POR\s*RENOVACIÓN',  # Nuevo patrón
+        r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS\s*HONORARIOS\s*POR\s*CONSULTAS\s*MÉDICAS',  # Nuevo patrón
+        r'MODIFICACIONES\s*A\s*GASTOS\s*CUBIERTOS\s*PADECIMIENTOS\s*PREEXISTENTES\s*CON\s*PERIODO\s*DE\s*ESPERA'  # Nuevo patrón
     ]
     
     # Remover cada patrón utilizando una expresión regular
@@ -129,6 +132,7 @@ def extract_and_clean_text(pdf_path):
     text_by_code = {}
     paragraphs = raw_text.split('\n')
     current_code = None
+    
     
     # Contar códigos por documento (únicos)
     code_counts = set()  # Usar un set para contar códigos únicos
