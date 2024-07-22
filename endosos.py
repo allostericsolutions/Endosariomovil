@@ -132,6 +132,8 @@ def extract_and_clean_text(pdf_path):
         r'CUBIERTOS',
         r'GASTOS',
         r'A',
+        r'ESTRBISMO',
+        r'OTROS',
     ]
     
     
