@@ -134,6 +134,10 @@ def extract_and_clean_text(pdf_path):
         r'ESTRBISMO',
         r'OTROS',
     ]
+
+     # Solo eliminar si la frase está completamente en mayúsculas
+    for pattern in patterns_to_remove:
+        raw_text = re.sub(pattern, '', raw_text)
     
     
     # Remover cada patrón utilizando una expresión regular
