@@ -345,16 +345,48 @@ if uploaded_file_1 and uploaded_file_2:
             '<th style="font-size: 20px; font-weight: bold;">Documento Verificación</th>'
         )
 
-        # Agrega estilos CSS para las celdas de similitud numérica
-        # Convierte la columna "Similitud Numérica" a float
+        # Convierte las columnas "Similitud Texto" y "Similitud Numérica" a float
+        df["Similitud Texto"] = df["Similitud Texto"].str.rstrip('%').astype(float)
         df["Similitud Numérica"] = df["Similitud Numérica"].str.rstrip('%').astype(float)
-        df["Similitud Numérica"] = df["Similitud Numérica"].apply(lambda x: f"{x:.2f}% {get_asterisks(x)}")
 
+        # Aplica estilos de color a las celdas de similitud
         for i, row in df.iterrows():
-            html = html.replace(
-                f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}%</td>',
-                f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}</td>'
-            )
+            # Similitud de Texto
+            if row["Similitud Texto"] >= 92:
+                html = html.replace(
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Texto"]}%</td>',
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top; color:green;">{row["Similitud Texto"]}%</td>'
+                )
+            elif row["Similitud Texto"] >= 85:
+                html = html.replace(
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Texto"]}%</td>',
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top; color:yellow;">{row["Similitud Texto"]}%</td>'
+                )
+            else:
+                html = html.replace(
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Texto"]}%</td>',
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top; color:red;">{row["Similitud Texto"]}%</td>'
+                )
+
+            # Similitud Numérica
+            if row["Similitud Numérica"] >= 92:
+                html = html.replace(
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}%</td>',
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top; color:green;">{row["Similitud Numérica"]}%</td>'
+                )
+            elif row["Similitud Numérica"] >= 85:
+                html = html.replace(
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}%</td>',
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top; color:yellow;">{row["Similitud Numérica"]}%</td>'
+                )
+            else:
+                html = html.replace(
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top;">{row["Similitud Numérica"]}%</td>',
+                    f'<td class="fixed-width" style="border:1px solid black; padding:10px; text-align:left; vertical-align:top; color:red;">{row["Similitud Numérica"]}%</td>'
+                )
+
+            # Aplica asteriscos al porcentaje de similitud numérica
+            row["Similitud Numérica"] = row["Similitud Numérica"].apply(lambda x: f"{x:.2f}% {get_asterisks(x)}")
 
         return html
 
