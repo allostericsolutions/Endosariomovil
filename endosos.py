@@ -263,10 +263,26 @@ st.image(image, caption='Interesse', use_column_width=True)
 uploaded_file_1 = st.file_uploader("Modelo", type=["pdf"], key="uploader1")
 uploaded_file_2 = st.file_uploader("Verificación", type=["pdf"], key="uploader2")
 
-if uploaded_file_1 and uploaded_file_2:
+# Variables para manejar el estado de los archivos subidos
+archivo_subido_1 = False
+archivo_subido_2 = False
+
+if uploaded_file_1:
+    archivo_subido_1 = True
     text_by_code_1, unique_code_count_1, codes_model = extract_and_clean_text(uploaded_file_1)
+
+if uploaded_file_2:
+    archivo_subido_2 = True
     text_by_code_2, unique_code_count_2, _ = extract_and_clean_text(uploaded_file_2)
 
+# Botón para reiniciar la aplicación
+if st.button("Reiniciar"):
+    archivo_subido_1 = False
+    archivo_subido_2 = False
+    # ... Resto del código para mostrar la pantalla inicial ...
+
+# Mostrar la sección de comparación de archivos solo si se han subido ambos archivos
+if archivo_subido_1 and archivo_subido_2:
     # Obtener todos los códigos únicos
     all_codes = set(text_by_code_1.keys()).union(set(text_by_code_2.keys()))
 
@@ -400,4 +416,3 @@ if uploaded_file_1 and uploaded_file_2:
                 file_name="comparison.txt",
                 mime="text/plain"
             )
-
