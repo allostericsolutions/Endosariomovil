@@ -387,7 +387,6 @@ if uploaded_file_1 and uploaded_file_2:
 
             # Aplica asteriscos al porcentaje de similitud numérica
             row["Similitud Numérica"] = row["Similitud Numérica"].apply(lambda x: f"{x:.2f}% {get_asterisks(x)}")
-
         return html
 
     # Convertir DataFrame a HTML con estilización CSS y HTML modificado
